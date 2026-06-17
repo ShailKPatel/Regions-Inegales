@@ -1,0 +1,22 @@
+# Backups & archive (not version-controlled; provenance in DATA_SOURCES.md)
+archive/backups/
+archive/raw_data/
+
+# Large data files
+*.xls
+*.xlsx
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Editor / OS / Claude
+.claude/
+.DS_Store
