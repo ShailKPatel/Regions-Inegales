@@ -1,14 +1,14 @@
 import streamlit as st
 
-BLUE = "#0055A4"
-RED  = "#EF4135"
-GRAY = "#9E9E9E"
-LIGHT_BG = "#F5F6FA"
+BLUE  = "#0055A4"
+RED   = "#EF4135"
+WHITE = "#FFFFFF"
+LIGHT_BG = "#DCDFE6"
 
 GROUP_COLORS = {
     "Opportunity": BLUE,
+    "Other":       WHITE,
     "Necessity":   RED,
-    "Other":       GRAY,
 }
 
 _CSS = """
@@ -71,17 +71,18 @@ _CSS = """
     display: flex;
     gap: 0;
     margin: 0.5rem 0 1rem 0;
-    border: 1px solid #E8E8E8;
+    border: 1px solid #C8CAD4;
     border-radius: 6px;
-    overflow: hidden;
+    overflow: visible;
 }
 .ri-stat-item {
     flex: 1;
     padding: 1.1rem 1.3rem;
-    background: #FFFFFF;
-    border-right: 1px solid #E8E8E8;
+    background: #ECEEF4;
+    border-right: 1px solid #C8CAD4;
 }
-.ri-stat-item:last-child { border-right: none; }
+.ri-stat-item:first-child { border-radius: 6px 0 0 6px; }
+.ri-stat-item:last-child  { border-right: none; border-radius: 0 6px 6px 0; }
 .ri-stat-n {
     font-size: 2.1rem;
     font-weight: 800;
@@ -100,8 +101,8 @@ _CSS = """
 }
 /* ── Note box ────────────────────────────────────── */
 .ri-note {
-    background: #F8F8F8;
-    border-left: 3px solid #CCCCCC;
+    background: #E4E6EE;
+    border-left: 3px solid #B0B2BC;
     padding: 0.75rem 1rem;
     font-size: 0.87rem;
     color: #444;
@@ -111,11 +112,11 @@ _CSS = """
 }
 /* ── Source cards ────────────────────────────────── */
 .ri-source-card {
-    background: #FFFFFF;
+    background: #ECEEF4;
     border-radius: 6px;
     padding: 0.85rem 1rem;
     margin-bottom: 0.6rem;
-    border: 1px solid #E8E8E8;
+    border: 1px solid #C8CAD4;
     border-left: 3px solid #111111;
 }
 .ri-source-name {
@@ -135,10 +136,10 @@ _CSS = """
 }
 /* ── Department profile panel ────────────────────── */
 .ri-profile-card {
-    background: #FFFFFF;
+    background: #ECEEF4;
     border-radius: 6px;
     padding: 1rem 1.1rem;
-    border: 1px solid #E8E8E8;
+    border: 1px solid #C8CAD4;
     border-top: 3px solid #111111;
 }
 .ri-profile-title {
@@ -167,12 +168,12 @@ _CSS = """
     font-size: 0.88rem;
 }
 .ri-val-table th {
-    background: #F5F5F5;
+    background: #E0E2EA;
     padding: 0.5rem 0.75rem;
     text-align: left;
     font-weight: 700;
     color: #111111;
-    border-bottom: 2px solid #DDDDDD;
+    border-bottom: 2px solid #C8CAD4;
 }
 .ri-val-table td {
     padding: 0.5rem 0.75rem;
@@ -182,7 +183,7 @@ _CSS = """
 .ri-val-table tr.headline td {
     font-weight: 700;
     color: #0055A4;
-    background: #F0F4FF;
+    background: #D8E0F4;
 }
 /* ── Sidebar branding ────────────────────────────── */
 .ri-sidebar-brand {
@@ -220,11 +221,54 @@ _CSS = """
 }
 /* ── Preprint block ──────────────────────────────── */
 .ri-preprint {
-    background: #FFFFFF;
+    background: #ECEEF4;
     border-radius: 6px;
     padding: 1.2rem 1.4rem;
-    border: 1px solid #E8E8E8;
+    border: 1px solid #C8CAD4;
     margin-top: 1.5rem;
+}
+/* ── Info tooltip ────────────────────────────────── */
+.ri-info-tip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #0055A4;
+    color: #FFFFFF;
+    font-size: 0.6rem;
+    font-weight: 700;
+    cursor: help;
+    position: relative;
+    vertical-align: middle;
+    margin-left: 3px;
+    line-height: 1;
+    text-transform: none;
+}
+.ri-info-tip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1A1A2E;
+    color: #FFFFFF;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    width: 270px;
+    text-align: left;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 9999;
+    line-height: 1.45;
+    font-weight: 400;
+    white-space: pre-line;
+}
+.ri-info-tip:hover::after {
+    opacity: 1;
 }
 /* ── Limitation list ─────────────────────────────── */
 .ri-lim-item {

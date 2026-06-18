@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import streamlit as st
 import plotly.graph_objects as go
-from utils import hero_header, stats_strip, plotly_defaults, BLUE, RED, GRAY
+from utils import hero_header, stats_strip, plotly_defaults, BLUE, RED, WHITE
 
 hero_header(
     "Régions Inégales",
@@ -11,12 +11,38 @@ hero_header(
 )
 
 st.markdown(
+    '<p style="font-size:1.5rem;font-weight:700;color:#1A1A2E;margin-bottom:0.5rem">'
+    "The necessity hypothesis is rejected."
+    "</p>",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
     """
     Education and income predict where firms form across French departments. Unemployment does not.
     An XGBoost model on 960 department-years assigns opportunity factors **60% of predictive weight**
     versus 15% for necessity. Unemployment ranks last of 8 features and runs negative in the full panel.
-    **The necessity hypothesis does not hold for French departments in this period.**
     """
+)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+_NH_TIP = (
+    "Necessity hypothesis: unemployment pushes people into self-employment.&#10;"
+    "&#10;"
+    "&#x2022; Unemployment ranks last of 8 SHAP features.&#10;"
+    "&#x2022; SHAP values are predominantly negative.&#10;"
+    "&#x2022; Opportunity factors carry 4x more weight."
+)
+
+st.markdown(
+    stats_strip([
+        ("10",       "years"),
+        ("96",       "departments"),
+        ("6",        "source datasets"),
+        ("REJECTED", f'necessity hypothesis <span class="ri-info-tip" data-tip="{_NH_TIP}">i</span>', True),
+    ]),
+    unsafe_allow_html=True,
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -24,10 +50,10 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('<h3 class="ri-section-h">Predictive importance by theory group</h3>', unsafe_allow_html=True)
 st.markdown('<p class="ri-caption">Mean |SHAP| grouped by theory · XGBoost · 960 dept-years · 2012-2021</p>', unsafe_allow_html=True)
 
-groups = ["Opportunity", "Necessity", "Other"]
-shares = [60, 15, 25]
-shap_totals = [2.914, 0.727, 1.183]
-colors = [BLUE, RED, GRAY]
+groups = ["Opportunity", "Other", "Necessity"]
+shares = [60, 25, 15]
+shap_totals = [2.914, 1.183, 0.727]
+colors = [BLUE, WHITE, RED]
 
 fig_hero = go.Figure()
 fig_hero.add_trace(
@@ -46,7 +72,7 @@ fig_hero.add_trace(
 fig_hero.add_annotation(
     x=0.5, xref="paper",
     y=72, yref="y",
-    text="<b>4.0× more important</b><br><span style='color:#666;font-size:11px'>opportunity vs necessity</span>",
+    text="<b>4.0x more important</b><br><span style='color:#666;font-size:11px'>opportunity vs necessity</span>",
     showarrow=True,
     arrowhead=2,
     ax=0, ay=-40,
@@ -73,14 +99,8 @@ fig_hero.update_yaxes(ticksuffix="%")
 
 st.plotly_chart(fig_hero, use_container_width=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
-
 st.markdown(
-    stats_strip([
-        ("960",      "dept-years"),
-        ("96",       "departments"),
-        ("6",        "source datasets"),
-        ("REJECTED", "necessity hypothesis", True),
-    ]),
-    unsafe_allow_html=True,
+    "This runs against the necessity-entrepreneurship hypothesis, which holds that unemployment "
+    "and hardship push people into self-employment. In French departments, the opposite pattern dominates. "
+    "This pattern holds across the decade: the necessity channel does not strengthen over 2012-2021, it weakens."
 )

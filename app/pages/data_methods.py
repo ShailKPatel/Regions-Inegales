@@ -17,6 +17,7 @@ st.markdown('<h3 class="ri-section-h">Data sources</h3>', unsafe_allow_html=True
 SOURCES = [
     {
         "name":       "Filosofi: Income, Poverty &amp; Inequality",
+        "url":        "https://www.insee.fr/fr/statistiques/2043745",
         "producer":   "INSEE · Fichier Localisé Social et Fiscal",
         "desc":       (
             "Household income deciles and quartiles, Gini coefficient, S80/S20, poverty rates "
@@ -28,6 +29,7 @@ SOURCES = [
     },
     {
         "name":       "SIDE: Firm Creations",
+        "url":        "https://www.insee.fr/fr/statistiques/8557644",
         "producer":   "INSEE · Système d'Information sur les Démographies d'Entreprises",
         "desc":       (
             "Total firm creations per department per year (2012-2021); legal-form breakdown "
@@ -40,6 +42,7 @@ SOURCES = [
     },
     {
         "name":       "Localised Unemployment Rate",
+        "url":        "https://www.insee.fr/fr/statistiques/2012804",
         "producer":   "INSEE · Estimations de taux de chômage localisés",
         "desc":       (
             "ILO quarterly unemployment rate, quarterly T1-T4 averaged to annual mean. "
@@ -51,6 +54,7 @@ SOURCES = [
     },
     {
         "name":       "Doctor Density (RPPS)",
+        "url":        "https://data.drees.solidarites-sante.gouv.fr/explore/dataset/la-demographie-des-professionnels-de-sante-depuis-2012/information/",
         "producer":   "DREES · Répertoire partagé des professionnels de santé",
         "desc":       (
             "Active doctors per 100,000 inhabitants at 1 January of each year. "
@@ -62,6 +66,7 @@ SOURCES = [
     },
     {
         "name":       "Education: Higher-Ed Share",
+        "url":        "https://www.insee.fr/fr/statistiques/8581488",
         "producer":   "INSEE · Diplômes et formation (RP census snapshots 2011, 2016, 2022)",
         "desc":       (
             "Share of non-schooled population aged 15+ with any higher-education diploma "
@@ -73,6 +78,7 @@ SOURCES = [
     },
     {
         "name":       "Urban/Rural Density",
+        "url":        "https://www.insee.fr/fr/information/8571524",
         "producer":   "INSEE · Grille de densité 2025 (RP2021-based)",
         "desc":       (
             "Percent urban by department: <code>pct_urban = 100 - P_RURAL</code>. "
@@ -84,8 +90,14 @@ SOURCES = [
     },
 ]
 
+_LINK = (
+    '<a href="{url}" target="_blank" rel="noopener noreferrer" '
+    'style="color:inherit;text-decoration:underline;text-decoration-color:#aaa;">{name}</a>'
+)
 for src in SOURCES:
-    st.markdown(source_card(src["name"], src["producer"], src["desc"]), unsafe_allow_html=True)
+    url = src.get("url", "")
+    name = _LINK.format(url=url, name=src["name"]) if url else src["name"]
+    st.markdown(source_card(name, src["producer"], src["desc"]), unsafe_allow_html=True)
 
 st.divider()
 
@@ -110,7 +122,7 @@ LIMITATIONS = [
         "2016–2018 SIDE measurement artefact.",
         "INSEE reformed the registration system in this period (auto-entrepreneur counting rules changed), "
         "causing a structural break in raw firm-creation counts. Year fixed effects in LOYO partly absorb "
-        "this, but residual inflation in those years cannot be ruled out.",
+        "this, but some residual inflation in those years likely remains.",
     ),
     (
         "Correlational, not causal.",
@@ -126,8 +138,7 @@ LIMITATIONS = [
     (
         "Doctor density as amenity proxy.",
         "Physician density is used as a quality-of-life proxy for the opportunity environment. Its positive "
-        "contribution likely reflects broader urban amenity endowments rather than a direct healthcare "
-        "mechanism.",
+        "contribution captures broader urban amenity endowments, not a direct healthcare effect.",
     ),
 ]
 
@@ -161,10 +172,30 @@ st.markdown(
         Across French Departments, 2012–2021.</em> Working paper. TODO-REAL: add DOI.
     </span>
     <br><br>
-    <strong>Data & replication</strong><br>
+    <strong>Data &amp; replication</strong><br>
     <span style="color:#888;font-size:0.88rem">
         All six source files are publicly available from INSEE and DREES. See source cards above for download URLs.
-        Replication code: TODO-REAL: link to GitHub repository.
+    </span>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown('<h3 class="ri-section-h">Project links</h3>', unsafe_allow_html=True)
+
+st.markdown(
+    """
+<div class="ri-preprint">
+    <strong>Live app</strong><br>
+    <span style="font-size:0.88rem">
+        <a href="https://regions-inegales.streamlit.app/" target="_blank"
+           style="color:#0055A4;">https://regions-inegales.streamlit.app/</a>
+    </span>
+    <br><br>
+    <strong>Source code</strong><br>
+    <span style="font-size:0.88rem">
+        <a href="https://github.com/ShailKPatel/Regions-Inegales" target="_blank"
+           style="color:#0055A4;">https://github.com/ShailKPatel/Regions-Inegales</a>
     </span>
 </div>
 """,
