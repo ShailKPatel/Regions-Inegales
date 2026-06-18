@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import streamlit as st
 import plotly.graph_objects as go
-from utils import page_header, plotly_defaults, BLUE, RED, GRAY
+from utils import page_header, plotly_defaults, BLUE, RED, WHITE
 
 page_header(
     "Model",
@@ -24,7 +24,7 @@ features = [
     ("% Urban",             "Opportunity", 0.1809),
     ("Unemployment rate",   "Necessity",   0.1096),
 ]
-GROUP_COLOR = {"Opportunity": BLUE, "Necessity": RED, "Other": GRAY}
+GROUP_COLOR = {"Opportunity": BLUE, "Other": WHITE, "Necessity": RED}
 
 feat_names   = [f[0] for f in reversed(features)]
 feat_groups  = [f[1] for f in reversed(features)]
@@ -94,7 +94,7 @@ st.markdown(
       <td>Leave-One-Dept-Out (LODO) ★</td>
       <td>0.674</td>
       <td>1.308</td>
-      <td>Generalisation to <em>unseen departments</em> — headline number</td>
+      <td>Generalisation to <em>unseen departments</em>; primary result</td>
     </tr>
     <tr>
       <td>Leave-One-Year-Out (LOYO)</td>
@@ -106,7 +106,7 @@ st.markdown(
       <td>Random 10-fold (KFold)</td>
       <td>0.921</td>
       <td>0.786</td>
-      <td>Leaky baseline — do <strong>not</strong> over-interpret</td>
+      <td>Leaky baseline; inflated upper bound</td>
     </tr>
   </tbody>
 </table>
@@ -154,10 +154,10 @@ def make_split_bar(subset_idx_list: list, title: str) -> go.Figure:
     fig = go.Figure()
     fig.add_trace(go.Bar(name="Opportunity", x=ctx, y=opp, marker_color=BLUE,
                          text=[f"{v}%" for v in opp], textposition="auto"))
+    fig.add_trace(go.Bar(name="Other",       x=ctx, y=oth, marker_color=WHITE,
+                         text=[f"{v}%" for v in oth], textposition="auto"))
     fig.add_trace(go.Bar(name="Necessity",   x=ctx, y=nec, marker_color=RED,
                          text=[f"{v}%" for v in nec], textposition="auto"))
-    fig.add_trace(go.Bar(name="Other",       x=ctx, y=oth, marker_color=GRAY,
-                         text=[f"{v}%" for v in oth], textposition="auto"))
 
     for i, (c, r) in enumerate(zip(ctx, rat)):
         fig.add_annotation(
@@ -196,6 +196,11 @@ for col, label, r2 in zip(
     col.metric(f"LODO R² · {label}", f"{r2:.3f}")
 
 st.markdown(
+    "Opportunity dominates in both contexts, and slightly more so in rural departments (4.6x) "
+    "than urban (3.8x), contrary to a necessity-driven account of rural entrepreneurship."
+)
+
+st.markdown(
     '<div class="ri-note">'
     "<strong>Rural subset:</strong> OLS finds a positive unemployment coefficient in rural "
     "departments (coef = +0.214, p &lt; 0.001). SHAP still ranks unemployment last of 8 "
@@ -203,4 +208,19 @@ st.markdown(
     "difference (p = 0.870)."
     "</div>",
     unsafe_allow_html=True,
+)
+
+st.markdown(
+    "**Necessity over time:** a year-interaction test on the full panel shows "
+    "the unemployment channel weakening (p < 0.001), not strengthening. "
+    "Opportunity factors deepen over the period."
+)
+
+st.divider()
+
+st.markdown('<h3 class="ri-section-h">Additional tests</h3>', unsafe_allow_html=True)
+st.markdown(
+    """
+- **Inequality (Gini)** was tested as a predictor and found inconclusive: it ranks 5th of 8, its importance weakens when Île-de-France is excluded, and its sign depends on the weighting scheme.
+"""
 )

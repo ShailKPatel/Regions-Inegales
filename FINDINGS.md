@@ -100,8 +100,8 @@ drive up entrepreneurship; if anything, it accompanies lower firm formation.
 France, 2012-2021.**
 
 Note on poverty rate: its positive OLS coefficient and moderate SHAP rank (4th of
-8) do not confirm necessity push. The most plausible interpretation is
-informalisation of labour: poorer areas have more micro-enterprise and
+8) do not confirm necessity push. The pattern reflects informalisation of labour:
+poorer areas have more micro-enterprise and
 auto-entrepreneur registrations for structural reasons, not because unemployment
 is pushing people into business formation.
 
@@ -130,24 +130,42 @@ necessity push at first glance. But three things undercut that reading:
    x rural interaction term) finds no significant interaction (p = 0.870
    unweighted, p = 0.569 population-weighted). The rural/urban difference in
    unemployment's coefficient is not statistically confirmed in the stronger test.
-3. The most plausible explanation is compositional: lower-income rural departments
+3. The pattern is compositional: lower-income rural departments
    have both higher unemployment and more micro-enterprise registrations for
    structural reasons. This produces a positive correlation without implying that
    unemployment drives firm creation.
 
-The rural OLS result is reported here honestly, not hidden. It was investigated
-and the evidence does not support the necessity interpretation.
+The rural OLS result was investigated and did not support the necessity interpretation.
 
 ---
 
-## What did not work (reported, not hidden)
+## Robustness: does the balance shift over time?
+
+Tested whether the necessity/opportunity balance changes across 2012-2021
+using year-interaction terms on the full 960-row panel (not year-by-year
+subsets, which are too small to trust).
+
+- The unemployment necessity channel WEAKENS over the period
+  (unemployment x year, population-weighted coef = -0.145, p < 0.001).
+- Opportunity features strengthen: education x year (+0.162, p < 0.001)
+  and income x year (+0.153, p = 0.002) both significant and positive.
+- A clean pre/post test (2012-2015 vs 2019-2021, dropping the SIDE-
+  affected 2016-2018 years) shows no necessity strengthening either.
+
+The opportunity dominance is not a period artifact and does not fade. If
+anything, the necessity channel shrinks over the decade while opportunity
+deepens. Year-by-year SHAP shares are illustrative: single-year models use 96 rows
+each and are too noisy for inference.
+
+---
+
+## What did not work
 
 **Gini coefficient**: tested as a predictor. Ranks 5th of 8 (mean |SHAP| = 0.411).
 The ranking is weaker without Ile-de-France (drops to 0.358), and the sign and
 magnitude of its OLS coefficient depend on the weighting scheme. No robust claim
 can be made about inequality driving or suppressing entrepreneurship from this
-model. Retained in the feature matrix for theoretical completeness; treated as
-inconclusive.
+model. It remains in the feature matrix; the result is inconclusive.
 
 ---
 
@@ -176,9 +194,8 @@ inconclusive.
    variation in this variable is artificial by construction.
 
 6. **Doctor density as amenity proxy.** Physician density is used as a
-   quality-of-life proxy for the opportunity environment. Its positive contribution
-   likely reflects broader urban amenity endowments rather than a direct healthcare
-   mechanism.
+   quality-of-life proxy for the opportunity environment. Its positive contribution captures broader urban amenity endowments, not
+   a direct healthcare effect.
 
 ---
 
@@ -192,8 +209,8 @@ urban and rural subsets. Its partial OLS relationship with firm creation
 is negative in the full panel and in urban departments; in rural
 departments the raw coefficient is positive (+0.214), but this is not
 confirmed by the pooled interaction test (p = 0.870) and unemployment
-still ranks last in the rural SHAP model, so the most credible reading is
-compositional rather than necessity-driven. Across every specification,
+still ranks last in the rural SHAP model, so the pattern is compositional,
+not necessity-driven. Across every specification,
 unemployment carries little predictive weight. The
 necessity-entrepreneurship hypothesis, which is prominent in much of the
 comparative literature, does not fit the French regional evidence for

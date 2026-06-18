@@ -1,112 +1,86 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import json
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
-import requests
-from utils import page_header, plotly_defaults, BLUE
+from utils import page_header, plotly_defaults
+
+from data_loader import (
+    load_panel, get_dept_names, get_year_slice, get_dept_year, COLUMN_MAP
+)
 
 page_header(
     "Map",
     "Department-level indicators across metropolitan France · 2012-2021",
 )
 
-# ── 96 metropolitan department codes ──────────────────────────────────────
-METRO_DEPT_CODES = (
-    [f"{i:02d}" for i in range(1, 20)]   # 01–19
-    + ["2A", "2B"]                         # Corsica
-    + [f"{i:02d}" for i in range(21, 96)] # 21–95
-)
+# ── GeoJSON (bundled locally) ──────────────────────────────────────────────
+_GEOJSON_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "departements.geojson")
 
-DEPT_NAMES = {
-    "01": "Ain", "02": "Aisne", "03": "Allier", "04": "Alpes-de-Haute-Provence",
-    "05": "Hautes-Alpes", "06": "Alpes-Maritimes", "07": "Ardèche", "08": "Ardennes",
-    "09": "Ariège", "10": "Aube", "11": "Aude", "12": "Aveyron",
-    "13": "Bouches-du-Rhône", "14": "Calvados", "15": "Cantal", "16": "Charente",
-    "17": "Charente-Maritime", "18": "Cher", "19": "Corrèze",
-    "2A": "Corse-du-Sud", "2B": "Haute-Corse",
-    "21": "Côte-d'Or", "22": "Côtes-d'Armor", "23": "Creuse", "24": "Dordogne",
-    "25": "Doubs", "26": "Drôme", "27": "Eure", "28": "Eure-et-Loir",
-    "29": "Finistère", "30": "Gard", "31": "Haute-Garonne", "32": "Gers",
-    "33": "Gironde", "34": "Hérault", "35": "Ille-et-Vilaine", "36": "Indre",
-    "37": "Indre-et-Loire", "38": "Isère", "39": "Jura", "40": "Landes",
-    "41": "Loir-et-Cher", "42": "Loire", "43": "Haute-Loire", "44": "Loire-Atlantique",
-    "45": "Loiret", "46": "Lot", "47": "Lot-et-Garonne", "48": "Lozère",
-    "49": "Maine-et-Loire", "50": "Manche", "51": "Marne", "52": "Haute-Marne",
-    "53": "Mayenne", "54": "Meurthe-et-Moselle", "55": "Meuse", "56": "Morbihan",
-    "57": "Moselle", "58": "Nièvre", "59": "Nord", "60": "Oise",
-    "61": "Orne", "62": "Pas-de-Calais", "63": "Puy-de-Dôme", "64": "Pyrénées-Atlantiques",
-    "65": "Hautes-Pyrénées", "66": "Pyrénées-Orientales", "67": "Bas-Rhin",
-    "68": "Haut-Rhin", "69": "Rhône", "70": "Haute-Saône", "71": "Saône-et-Loire",
-    "72": "Sarthe", "73": "Savoie", "74": "Haute-Savoie", "75": "Paris",
-    "76": "Seine-Maritime", "77": "Seine-et-Marne", "78": "Yvelines",
-    "79": "Deux-Sèvres", "80": "Somme", "81": "Tarn", "82": "Tarn-et-Garonne",
-    "83": "Var", "84": "Vaucluse", "85": "Vendée", "86": "Vienne",
-    "87": "Haute-Vienne", "88": "Vosges", "89": "Yonne", "90": "Territoire de Belfort",
-    "91": "Essonne", "92": "Hauts-de-Seine", "93": "Seine-Saint-Denis",
-    "94": "Val-de-Marne", "95": "Val-d'Oise",
-}
-
-COLOR_BY_OPTIONS = {
-    "Firm rate (per 1,000 inhab.)": "firm_rate",
-    "Median income (disposable)":   "median_income",
-    "Education share (higher-ed %)":"education",
-    "Unemployment rate (%)":        "unemployment",
-    "Doctor density (per 100k)":    "doctor_density",
-    "% Urban":                      "pct_urban",
-}
-
-# ── Controls row ───────────────────────────────────────────────────────────
-col_ctrl, col_yr = st.columns([3, 1])
-with col_ctrl:
-    color_label = st.selectbox("Color by:", list(COLOR_BY_OPTIONS.keys()))
-with col_yr:
-    year = st.selectbox("Year:", list(range(2012, 2022)), index=9)
-
-color_key = COLOR_BY_OPTIONS[color_label]
-
-# ── Dummy data (TODO-REAL: replace with master CSV lookup in Phase 2) ─────
-rng = np.random.default_rng(seed=hash(color_key) % (2**31))
-dummy_values = rng.uniform(10, 90, size=len(METRO_DEPT_CODES))
-
-df_map = pd.DataFrame({
-    "code":  METRO_DEPT_CODES,
-    "name":  [DEPT_NAMES.get(c, c) for c in METRO_DEPT_CODES],
-    "value": dummy_values,
-})
-# TODO-REAL: load from filosofi_panel.csv filtered to `year`, pivot by color_key
-
-# ── GeoJSON load with fallback ─────────────────────────────────────────────
-@st.cache_data(show_spinner=False, ttl=86400)
+@st.cache_data(show_spinner=False)
 def load_geojson():
-    url = (
-        "https://raw.githubusercontent.com/gregoiredavid/"
-        "france-geojson/master/departements-version-simplifiee.geojson"
-    )
     try:
-        r = requests.get(url, timeout=12)
-        r.raise_for_status()
-        return r.json()
-    except Exception:
+        with open(_GEOJSON_PATH) as f:
+            return json.load(f)
+    except FileNotFoundError:
         return None
 
-with st.spinner("Loading map data…"):
-    geojson = load_geojson()
+geojson = load_geojson()
+
+# ── Data ───────────────────────────────────────────────────────────────────
+with st.spinner("Loading data…"):
+    df = load_panel()
+
+dept_names = get_dept_names(df)
+
+# ── Controls row ───────────────────────────────────────────────────────────
+COLOR_OPTIONS = {
+    "Firm rate (per 1,000 inhab.)":  "firm_rate",
+    "Median income (disposable, €)": "q2_disp",
+    "Higher-ed share (%)":           "edu_share_sup",
+    "Unemployment rate (%)":         "unemployment_rate",
+    "Doctor density (per 100k)":     "doctor_density_per_100k",
+    "% Urban":                       "pct_urban",
+    "Poverty rate (%)":              "poverty_rate_disp",
+    "Gini coefficient":              "gini_disp",
+}
+
+PROFILE_VARS = [
+    ("Firm rate",       "firm_rate",              ".1f"),
+    ("Median income",   "q2_disp",                ",.0f"),
+    ("Higher-ed share", "edu_share_sup",           ".1f"),
+    ("Unemployment",    "unemployment_rate",       ".1f"),
+    ("Doctor density",  "doctor_density_per_100k", ".0f"),
+    ("% Urban",         "pct_urban",               ".1f"),
+    ("Poverty rate",    "poverty_rate_disp",       ".1f"),
+    ("Gini",            "gini_disp",               ".4f"),
+]
+
+col_ctrl, col_yr = st.columns([3, 1])
+with col_ctrl:
+    color_label = st.selectbox("Color by:", list(COLOR_OPTIONS.keys()))
+with col_yr:
+    year = st.slider("Year:", 2012, 2021, 2021)
+
+color_col = COLOR_OPTIONS[color_label]
+
+# ── Build choropleth data ──────────────────────────────────────────────────
+df_yr = get_year_slice(df, year)
+df_map = df_yr[["dep_code", "dep_name", color_col]].copy()
+df_map = df_map.rename(columns={"dep_code": "code", "dep_name": "name", color_col: "value"})
 
 # ── Map + profile panel ────────────────────────────────────────────────────
 map_col, profile_col = st.columns([3, 1])
 
 with map_col:
     if geojson is None:
-        st.markdown(
-            '<div class="ri-placeholder">'
-            "⚠️ <strong>Map unavailable</strong><br>"
-            "Could not fetch the departments GeoJSON (network error).<br>"
-            "The choropleth will appear here in Phase 2 once the GeoJSON is bundled locally."
-            "</div>",
-            unsafe_allow_html=True,
+        st.error(
+            "**GeoJSON not found.** Expected at `app/assets/departements.geojson`.\n\n"
+            "Fetch it from:\n"
+            "`https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/"
+            "departements-version-simplifiee.geojson`"
         )
     else:
         fig_map = px.choropleth(
@@ -116,7 +90,7 @@ with map_col:
             featureidkey="properties.code",
             color="value",
             hover_name="name",
-            hover_data={"code": True, "value": ":.1f"},
+            hover_data={"code": True, "value": ":.2f"},
             color_continuous_scale="Blues",
             labels={"value": color_label, "code": "Dept."},
         )
@@ -147,38 +121,55 @@ with map_col:
 
 with profile_col:
     st.markdown("#### Department profile")
+    dept_codes_sorted = sorted(df["dep_code"].unique())
     dept_select = st.selectbox(
         "Select department:",
-        options=METRO_DEPT_CODES,
-        format_func=lambda c: f"{c} — {DEPT_NAMES.get(c, c)}",
+        options=dept_codes_sorted,
+        format_func=lambda c: f"{c} - {dept_names.get(c, c)}",
         key="dept_profile",
     )
-    name = DEPT_NAMES.get(dept_select, dept_select)
+    name = dept_names.get(dept_select, dept_select)
+    row = get_dept_year(df, dept_select, year)
 
-    # TODO-REAL: replace all dummy values below with master CSV lookup
-    rng2 = np.random.default_rng(seed=hash(dept_select) % (2**31))
-    dummy_profile = {
-        "Firm rate":        f"{rng2.uniform(5, 25):.1f} / 1,000",
-        "Median income":    f"€{rng2.integers(18000, 38000):,}",
-        "Education share":  f"{rng2.uniform(18, 50):.1f}%",
-        "Unemployment":     f"{rng2.uniform(4, 14):.1f}%",
-        "Doctor density":   f"{rng2.uniform(150, 400):.0f} / 100k",
-        "% Urban":          f"{rng2.uniform(10, 100):.1f}%",
-    }
+    if row is not None:
+        # National rank on the chosen variable (lower rank = higher value)
+        col_vals = df_yr[color_col].dropna()
+        val_here = row[color_col]
+        rank = int((col_vals > val_here).sum()) + 1
+        n_total = len(col_vals)
 
-    rows = "".join(
-        f'<div class="ri-profile-row">'
-        f'<span>{k}</span>'
-        f'<span class="ri-profile-val">{v}</span>'
-        f"</div>"
-        for k, v in dummy_profile.items()
-    )
-    st.markdown(
-        f'<div class="ri-profile-card">'
-        f'<div class="ri-profile-title">{dept_select} · {name}</div>'
-        f"{rows}"
-        f'<p style="font-size:0.72rem;color:#aaa;margin-top:0.6rem">Placeholder values · {year}</p>'
-        f"</div>",
-        unsafe_allow_html=True,
-    )
+        profile_rows = ""
+        for label, col, fmt in PROFILE_VARS:
+            v = row.get(col, None)
+            if pd.isna(v):
+                formatted = "—"
+            elif col == "q2_disp":
+                formatted = f"€{v:,.0f}"
+            else:
+                formatted = f"{v:{fmt}}"
+            profile_rows += (
+                f'<div class="ri-profile-row">'
+                f'<span>{label}</span>'
+                f'<span class="ri-profile-val">{formatted}</span>'
+                f"</div>"
+            )
 
+        density = row.get("density_class", "—")
+        st.markdown(
+            f'<div class="ri-profile-card">'
+            f'<div class="ri-profile-title">{dept_select} · {name}</div>'
+            f"{profile_rows}"
+            f'<div class="ri-profile-row" style="margin-top:0.4rem">'
+            f'<span>Density class</span>'
+            f'<span class="ri-profile-val">{density}</span>'
+            f"</div>"
+            f'<div class="ri-profile-row">'
+            f'<span>Rank ({color_label[:18]})</span>'
+            f'<span class="ri-profile-val">#{rank} / {n_total}</span>'
+            f"</div>"
+            f'<p style="font-size:0.72rem;color:#aaa;margin-top:0.6rem">{year} data</p>'
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.info(f"No data for {dept_select} in {year}.")
