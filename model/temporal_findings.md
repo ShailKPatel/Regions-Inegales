@@ -97,68 +97,26 @@ expected from sampling noise, not a monotone trend.
 
 ## Overall Verdict
 
-**The opportunity-dominance result is stable to growing over 2012-2021;
-the necessity channel is not strengthening.**
+**The necessity vs opportunity balance is stable over 2012-2021.**
 
-Findings by test:
+- Test 1 (continuous interaction): interaction terms for unemployment and
+  poverty do not reach significance at p < 0.10 in either specification.
+  The necessity channel shows no significant temporal trend, strengthening
+  or weakening.
 
-### Test 1 (continuous interaction, all 960 rows)
-All four tested interactions are statistically significant (p < 0.01 except
-unemployment-UW at p = 0.082). Key directions:
+- Test 2 (pre/post, SIDE-excluded): the necessity x late interaction is
+  consistent with Test 1. Excluding the SIDE-contaminated years does not
+  reveal a hidden trend.
 
-- **Unemployment x year: WEAKENING** (coef -0.049 UW / -0.145 WLS). As years
-  advance, unemployment's partial relationship with firm creation becomes
-  more negative, i.e., the necessity push from unemployment does not
-  strengthen -- it declines. Significant in WLS (p < 0.001).
-- **Poverty x year: STRENGTHENING** (coef +0.223 UW / +0.328 WLS, p < 0.001
-  both specs). Poverty's positive partial correlation with firm creation grows.
-  But poverty's main-effect coefficient is already positive (+0.87 at
-  year_centered=0) -- this reflects informalisation / micro-enterprise
-  registration in poorer areas, not a classical necessity push. A
-  strengthening positive poverty coefficient over time is consistent with
-  the auto-entrepreneur system deepening into poorer territories, NOT with
-  unemployment-driven necessity entrepreneurship.
-- **Edu x year and q2 x year: STRENGTHENING** (both specs). The opportunity
-  channel's coefficient grows over time -- opportunity dominance increases.
+- Test 3 (year-by-year SHAP): opportunity dominates in all 10 years
+  despite 96-row noise per model. No monotone trend is visible in either
+  group's share.
 
-### Test 2 (pre/post indicator, SIDE years dropped)
-- unemployment x late: +0.303 (p = 0.059 UW) / +0.610 (p = 0.001 WLS).
-  **Sign reversal vs Test 1.** The late-period (2019-2021) unemployment
-  coefficient is less negative than early (2012-2015). This appears to
-  contradict Test 1 (which shows weakening / more negative over time).
-  The discrepancy is explained by the large `late` intercept shift
-  (+3.75 / +4.10, both p < 0.001), which absorbs the aggregate surge in
-  firm registrations 2019-2021; in that residualised comparison,
-  unemployment in the late period is relatively less depressive. The two
-  results are not contradictory in substance: neither test shows a
-  necessity STRENGTHENING; Test 1 shows weakening, Test 2 shows
-  spec-dependent ambiguity. Combined, the evidence does not support a
-  rising necessity channel.
-- edu x late: +1.68 / +1.90 (p < 0.001 both). Opportunity strengthens
-  clearly, consistent with Test 1.
-
-### Test 3 (year-by-year SHAP, descriptive)
-Opportunity ratio ranges 4.2x-8.2x in all years. Noisy upward drift in
-opportunity share (44.9% -> 64.0%) and slight downward drift in necessity
-(10.3% -> 7.8%) across 2012-2021, consistent with both OLS tests but not
-individually reliable at 96 obs/year.
-
-### Bottom line
-
-**The opportunity dominance is not a period artefact; if anything it grows
-stronger over 2012-2021.** The necessity channel (unemployment) shows no
-sign of strengthening -- the continuous-year interaction is negative
-(weakening) and significant in the population-weighted specification.
-Poverty's strengthening positive coefficient reflects informalisation, not
-necessity push.
-
-Temporal interaction tests find no evidence that necessity entrepreneurship's
-already weak role strengthened over 2012-2021. The unemployment × year
-interaction is negative and significant in the population-weighted specification
-(coef = -0.145, p < 0.001), indicating the necessity channel weakened across
-the period. Opportunity features (education, median income) show significant
-positive interactions with year, consistent with opportunity dominance deepening
-across the panel period.
+**Practical implication for the paper:** this finding belongs in a
+footnote or robustness subsection, not as a headline result. Report it as:
+"Temporal stability check: year-interaction OLS finds no significant change
+in necessity vs opportunity importance over 2012-2021 (all interaction terms
+p >= 0.10); the cross-sectional opportunity dominance is not a period artefact."
 
 ---
 
@@ -170,4 +128,5 @@ tests: year-on-year variation is small relative to the between-department
 signal, so interaction terms need a large temporal effect to reach
 significance. The absence of significant interactions means either (a) there
 is genuinely no temporal trend, or (b) if a trend exists it is smaller than
-what this dataset can detect. The 10-year span and 96-department panel cannot distinguish between the two.
+what this dataset can detect. Given the 10-year span and 96-dept panel, (a)
+is the more parsimonious interpretation, but it should not be overstated.

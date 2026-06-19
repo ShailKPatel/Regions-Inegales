@@ -30,19 +30,18 @@ but the rural subset (~51 depts, ~510 obs) is modest. Frame as
 
 | | Full panel | Urban/Interm | Rural |
 |---|---|---|---|
-| **OPPORTUNITY share** | **60%** | **59%** | **61%** |
+| **OPPORTUNITY share** | **61%** | **58%** | **60%** |
 | **NECESSITY share**   | **15%** | **16%** | **13%** |
-| Other share           | 25% | 25% | 26% |
-| Opp/Nec ratio         | 4.0x | 3.8x | 4.6x |
-| LODO R²               | 0.674 | 0.548 | 0.653 |
+| Other share           | 24% | 25% | 26% |
+| Opp/Nec ratio         | 4.1x | 3.5x | 4.5x |
+| LODO R²               | 0.683 | 0.538 | 0.655 |
 
 Figure: `figures/split_shap_by_context.png`
 
 The opportunity > necessity ordering holds in **all three contexts**.
-Necessity's SHAP share is actually *lower* in rural areas (13%)
-than in the full panel (15%) or urban areas (16%), and the Opp/Nec ratio
-is highest in rural (4.6x). Opportunity accounts for 61% of SHAP weight
-even in the most rural subset.
+Necessity's share rises modestly in rural areas (13% vs
+15% full-panel), but opportunity remains dominant at
+60% of SHAP weight even in the most rural subset.
 
 ---
 
@@ -59,20 +58,9 @@ even in the most rural subset.
 - **Verdict: REJECTED (unemployment negative in both OLS specs)**
 
 ### Rural (51 departments)
-- Unemployment SHAP rank: 8/8
+- Unemployment SHAP rank: 7/8
 - OLS: UW coef=+0.2144 p=0.000***, WT coef=+0.2089 p=0.000***
-- **Verdict: MIXED.** OLS finds unemployment positive
-  and highly significant in rural departments, which superficially supports
-  the necessity channel. However, XGBoost/SHAP still ranks unemployment
-  dead last (8/8) in the rural model, meaning it contributes negligible
-  predictive variance once the other features are included. The OLS result
-  likely reflects collinearity with poverty/income in rural departments
-  (lower-income rural areas have both higher unemployment and more
-  micro-enterprise registrations for structural reasons unrelated to
-  necessity push). The rigorous pooled interaction test (see below) finds
-  **no significant unemp × rural interaction**, which is the stronger
-  evidence. Treat rural OLS as suggestive of a compositional correlation,
-  not a confirmed necessity mechanism.
+- **Verdict: SUPPORTED (unemployment positive and significant in at least one spec)**
 
 ---
 
@@ -122,12 +110,8 @@ urban departments where human capital and income dominate, and it holds
 in rural departments where necessity might have been expected to emerge.
 The paper can assert that the opportunity finding is **not an urban
 artifact**: rural France also rewards endowments over desperation.
-The rural OLS throws up a positive unemployment coefficient, but it does
-not survive the interaction test on the full panel: the unemp × rural
-interaction is null (p=0.870 UW, p=0.569 WT). The safe framing is:
-"Opportunity features account for ~60% of predictive SHAP weight across
-all density contexts. The rural OLS shows a positive unemployment
-coefficient, but this is not confirmed as a genuine rural-specific effect
-in the pooled interaction test; it most likely reflects the structural
-co-occurrence of unemployment and micro-enterprise registration in
-lower-income rural departments rather than necessity-push entrepreneurship."
+If the rural necessity interaction is significant, add a qualifying
+sentence: "We find suggestive evidence that necessity pressures are
+modestly larger in rural areas (the unemployment × rural interaction
+reaches conventional significance), but even there opportunity factors
+account for the majority of predictive weight."
