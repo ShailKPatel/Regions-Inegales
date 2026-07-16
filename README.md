@@ -73,7 +73,7 @@ DATA_SOURCES.md           Data provenance and verification
 requirements.txt          Python dependencies
 ```
 
-The panel dataset (`merged/france_panel_master.csv`) and raw sources (`sources/`) are not committed. See DATA_SOURCES.md to rebuild from scratch.
+The panel dataset (`merged/france_panel_master.csv`) and raw sources (`sources/`) are committed to this repository (INSEE/DREES data is open-licensed). See DATA_SOURCES.md for provenance, verification methodology, and rebuild-from-scratch instructions.
 
 ## Citation
 

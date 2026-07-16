@@ -1,3 +1,8 @@
+> **DEPRECATED.** This is the earlier draft of the same OOF-SHAP-via-LODO
+> pipeline (same methodology, same numbers as `model/findings_final.md`),
+> superseded by `model/final_model.py`. Not cited anywhere in
+> `FINDINGS.md`. Kept for reference only.
+
 # Model report - firm_rate baseline
 Rows: 960, features: 8
 Features: ['q2_disp', 'gini_disp', 'poverty_rate_disp', 'unemployment_rate', 'doctor_density_per_100k', 'edu_share_sup', 'pct_urban', 'pct_wages']
