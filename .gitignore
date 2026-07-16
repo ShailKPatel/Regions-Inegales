@@ -20,3 +20,4 @@ venv/
 # Editor / OS / Claude
 .claude/
 .DS_Store
+CLAUDE.md

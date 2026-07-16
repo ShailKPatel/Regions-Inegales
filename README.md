@@ -2,7 +2,7 @@
 
 XGBoost analysis of firm-creation rates across 96 French departments, 2012–2021. Two competing explanations exist for why rates differ: the necessity hypothesis (unemployment and poverty push people into self-employment) and the opportunity hypothesis (education and income pull people toward entrepreneurship).
 
-**Result:** the necessity hypothesis is rejected. Opportunity features (education, income) carry 60% of predictive SHAP weight; necessity features (unemployment, poverty) carry 15%. Unemployment ranks last of 8 features and runs negative in the full panel. LODO R² = 0.674.
+**Result:** the necessity hypothesis is rejected. Opportunity features (education, income) carry 58% of predictive SHAP weight; necessity features (unemployment, poverty) carry 20%. Unemployment ranks last of 8 features and runs negative in the full panel. LODO R² = 0.678.
 
 ## Live app
 
@@ -23,13 +23,13 @@ Requires Python 3.10+.
 |------|---------|
 | Overview | Headline result and SHAP group shares |
 | Map | Choropleth of any panel variable by year |
-| Model | Feature importance, cross-validation, urban/rural split |
+| Model | Feature importance, cross-validation, urban/rural split, birth rate appendix |
 | Explore | Scatter of firm rate vs any feature, with OLS trendline |
 | Methods | Data sources, limitations, citation |
 
 ## Data
 
-Six official sources, all publicly available:
+Nine official sources, all publicly available:
 
 | Source | Producer | Variable |
 |--------|----------|----------|
@@ -39,18 +39,21 @@ Six official sources, all publicly available:
 | RPPS | DREES | Doctor density per 100k |
 | Diplômes et formation | INSEE | Higher-education share |
 | Grille de densité 2025 | INSEE | % Urban |
+| DS_NAISSANCES_FECONDITE_SERIES | INSEE | Live births, birth rate |
+| DS_ETAT_CIVIL_DECES_COMMUNES | INSEE | Deaths, death rate |
+| État civil DEP6 (annual files) | INSEE | Marriages, marriage rate |
 
-Panel: 960 observations (96 metropolitan departments × 10 years). Download URLs and verification notes are in [DATA_SOURCES.md](DATA_SOURCES.md).
+Panel: 960 observations (96 metropolitan departments × 10 years), 51 columns. Download URLs and verification notes are in [DATA_SOURCES.md](DATA_SOURCES.md).
 
 ## Model
 
-XGBoost trained on 8 structural predictors. SHAP (SHapley Additive exPlanations) used for feature attribution. Three cross-validation schemes; the headline is leave-one-department-out (LODO) at R² = 0.674.
+XGBoost trained on 8 structural predictors. SHAP (SHapley Additive exPlanations) used for feature attribution. Three cross-validation schemes; the headline is leave-one-department-out (LODO) at R² = 0.678.
 
 | Validation | R² | MAE |
 |------------|-----|-----|
-| Leave-One-Dept-Out (LODO) ★ | 0.674 | 1.308 |
-| Leave-One-Year-Out (LOYO) | 0.906 | 0.847 |
-| Random 10-fold (KFold) | 0.921 | 0.786 |
+| Leave-One-Dept-Out (LODO) ★ | 0.678 | 1.4951 |
+| Leave-One-Year-Out (LOYO) | 0.929 | 0.7564 |
+| Random 10-fold (KFold) | 0.932 | 0.7479 |
 
 ★ Primary result. KFold is a leaky baseline: departments appear in both train and test sets.
 

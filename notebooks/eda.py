@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-EDA for Regions Inegales -- france_panel_master.csv (960 x 45)
+EDA for Regions Inegales -- france_panel_master.csv (960 x 45 after year filter)
 96 French metropolitan departments x 10 years (2012-2021).
 Intended target: firm creation rate per capita, constructed in S1.
 Run: python3 notebooks/eda.py
@@ -30,7 +30,10 @@ except ImportError:
 
 warnings.filterwarnings('ignore')
 
+import sys
 ROOT = "/home/crusie/3. Code/Régions Inégales"
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from panel_config import PANEL_START, PANEL_END
 FIGS = os.path.join(ROOT, "figures")
 os.makedirs(FIGS, exist_ok=True)
 
@@ -75,9 +78,9 @@ df = pd.read_csv(
     dtype={'dep_code': object},
 )
 
-# --- shape ---
-assert df.shape == (960, 45), f"Expected 960x45, got {df.shape}"
-print(f"Shape: {df.shape}  OK")
+# --- shape (raw file; year filter applied after pop merge) ---
+assert df.shape[1] == 45, f"Expected 45 columns, got {df.shape[1]}"
+print(f"Shape (raw): {df.shape}  OK")
 
 # --- dep_code data integrity (not dtype -- check actual values) ---
 assert '01' in df['dep_code'].values, "Leading zero '01' missing from dep_code"
@@ -99,7 +102,7 @@ nulls = df.isnull().sum()
 missing = nulls[nulls > 0]
 print("\nMissing values:")
 print(missing.to_string() if not missing.empty else "  None")
-print("(Expected: poverty_rate_dec 96 nulls -- all 2012, structural)")
+print("(poverty_rate_dec: 96 nulls in 2012 are structural — declared-income Pauvres file unavailable for 2012)")
 print()
 print(df.head(3).to_string())
 
@@ -131,7 +134,8 @@ df = df.merge(pop[['dep_code', 'year', 'pop_jan1']], on=['dep_code', 'year'], ho
 assert len(df) == n_before, "Merge changed row count"
 assert df['pop_jan1'].isnull().sum() == 0, \
     f"pop_jan1 join produced {df['pop_jan1'].isnull().sum()} nulls -- dep_code mismatch"
-print(f"pop_jan1 merged OK, {df['pop_jan1'].isnull().sum()} nulls  ->  shape now {df.shape}")
+df = df[(df['year'] >= PANEL_START) & (df['year'] <= PANEL_END)].reset_index(drop=True)
+print(f"pop_jan1 merged OK; filtered to {PANEL_START}-{PANEL_END}: shape now {df.shape}")
 
 # Sanity: n_persons vs pop_jan1
 ratio = df['n_persons'] / df['pop_jan1']
@@ -291,8 +295,8 @@ plot_hist_grid(FEAT_COMP + FEAT_OTHER,
                'S2_hist_other')
 
 # Boxplots by period
-df['period'] = pd.cut(df['year'], bins=[2011, 2015, 2018, 2021],
-                      labels=['2012-15', '2016-18', '2019-21'])
+df['period'] = pd.cut(df['year'], bins=[2011, 2014, 2017, 2021],
+                      labels=['2012-14', '2015-17', '2018-21'])
 plot_cols = [c for c in ALL_FEATS + [TARGET_COL] if c in df.columns]
 ncols_bp  = 5
 nrows_bp  = int(np.ceil(len(plot_cols) / ncols_bp))
@@ -308,7 +312,7 @@ for i, col in enumerate(plot_cols):
     ax.tick_params(axis='x', labelsize=8)
 for ax in axes_flat[len(plot_cols):]:
     ax.set_visible(False)
-fig.suptitle('Boxplots by Period -- All Variables (2012-15 / 2016-18 / 2019-21)',
+fig.suptitle('Boxplots by Period -- All Variables (2012-14 / 2015-17 / 2018-21)',
              fontsize=13, fontweight='bold', y=1.01)
 plt.tight_layout()
 savefig(fig, 'S2_boxplots_by_period')
@@ -330,8 +334,6 @@ for col in ALL_FEATS + [TARGET_COL]:
 findings.append(f'[S2] Log-transform candidates (|skew|>=2): {log_candidates}')
 findings.append('[S2] Paris (75) and inner IDF systematic outliers on n_persons, '
                 'doctor_density_per_100k, and firm_rate. Small rural depts (Lozere 48) on low end.')
-findings.append('[S2] poverty_rate_disp 2012 inflated (~21.6% vs ~14.5% post-2012) -- '
-                'structural break (sourced from declared-income file that year).')
 
 
 # ===========================================================================

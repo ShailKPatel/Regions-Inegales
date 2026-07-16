@@ -134,6 +134,38 @@ _CSS = """
     color: #555;
     line-height: 1.45;
 }
+.ri-source-links {
+    margin-top: 0.55rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+}
+.ri-year-btn {
+    display: inline-block;
+    padding: 0.18rem 0.52rem;
+    background: #0055A4;
+    color: #FFFFFF !important;
+    border-radius: 4px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    letter-spacing: 0.2px;
+    line-height: 1.5;
+}
+.ri-year-btn:hover { background: #003d7a; }
+.ri-src-btn {
+    display: inline-block;
+    padding: 0.18rem 0.65rem;
+    background: #111111;
+    color: #FFFFFF !important;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    line-height: 1.5;
+}
+.ri-src-btn:hover { background: #333333; }
 /* ── Department profile panel ────────────────────── */
 .ri-profile-card {
     background: #ECEEF4;
@@ -283,6 +315,40 @@ _CSS = """
     font-weight: 700;
     color: #111111;
 }
+/* ── Footer ──────────────────────────────────────── */
+[data-testid="stAppViewBlockContainer"],
+[data-testid="stMainBlockContainer"],
+.block-container {
+    padding-bottom: 0 !important;
+}
+.ri-footer {
+    margin-top: 4rem;
+    padding: 1.5rem 0 1.5rem 0;
+    border-top: 1px solid #C8CAD4;
+    text-align: center;
+    color: #888;
+    font-size: 0.82rem;
+}
+.ri-footer-copy {
+    margin-bottom: 0.4rem;
+}
+.ri-footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    align-items: center;
+}
+.ri-footer-links a {
+    color: #888 !important;
+    text-decoration: none !important;
+    font-weight: 500;
+}
+.ri-footer-links a:hover {
+    color: #111111 !important;
+}
+.ri-footer-sep {
+    color: #C8CAD4;
+}
 </style>
 """
 
@@ -323,12 +389,14 @@ def stats_strip(items: list) -> str:
     return f'<div class="ri-stats-strip">{cards}</div>'
 
 
-def source_card(name: str, producer: str, desc: str) -> str:
+def source_card(name: str, producer: str, desc: str, links_html: str = "") -> str:
+    links_block = f'<div class="ri-source-links">{links_html}</div>' if links_html else ""
     return (
         f'<div class="ri-source-card">'
         f'<div class="ri-source-name">{name}</div>'
         f'<div class="ri-source-producer">{producer}</div>'
         f'<div class="ri-source-desc">{desc}</div>'
+        f'{links_block}'
         f"</div>"
     )
 
@@ -339,4 +407,18 @@ def plotly_defaults() -> dict:
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="sans-serif", color="#1A1A2E"),
         margin=dict(l=10, r=10, t=30, b=10),
+    )
+
+
+def render_footer():
+    st.markdown(
+        '<div class="ri-footer">'
+        '<div class="ri-footer-copy">© 2026 Shail K Patel. Crafted out of boredom.</div>'
+        '<div class="ri-footer-links">'
+        '<a href="https://github.com/ShailKPatel/Regions-Inegales" target="_blank">GitHub Repo</a>'
+        '<span class="ri-footer-sep">|</span>'
+        '<span>MIT License</span>'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True,
     )

@@ -17,6 +17,11 @@ import matplotlib.pyplot as plt
 import xgboost as xgb
 import shap
 
+import sys, os
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_ROOT, "scripts"))
+from panel_config import PANEL_START, PANEL_END
+
 RNG         = 42
 MASTER_PATH = "merged/france_panel_master.csv"
 POP_PATH    = "sources/population_insee.csv"
@@ -57,10 +62,11 @@ pop["dep_code"] = pop["dep_code"].str.strip('"')
 
 df = master.merge(pop, on=["dep_code", "year"], how="left")
 assert df["pop_jan1"].isna().sum() == 0, "unmatched pop rows"
-df[TARGET]         = df["total_firm_creations"] / df["pop_jan1"] * 1000
+df = df[(df["year"] >= PANEL_START) & (df["year"] <= PANEL_END)].reset_index(drop=True)
+df[TARGET]          = df["total_firm_creations"] / df["pop_jan1"] * 1000
 df["year_centered"] = df["year"] - 2016
 
-# ── STANDARDIZE features (z-score on full 960-row panel) ─────────────────
+# ── STANDARDIZE features (z-score on 960-row panel) ──────────────────────
 feat_means = df[FEATURES].mean()
 feat_stds  = df[FEATURES].std(ddof=1)
 for f in FEATURES:
@@ -72,7 +78,7 @@ r("=" * 72)
 r("TEMPORAL INTERACTION TEST -- Regions Inegales")
 r("=" * 72)
 r(f"Rows: {len(df)}  |  Depts: {df['dep_code'].nunique()}  |  Years: {sorted(df['year'].unique())}")
-r("Features z-scored on full 960-row panel.  year_centered = year - 2016.")
+r("Features z-scored on 960-row panel.  year_centered = year - 2016.")
 r()
 
 # ======================================================================
@@ -98,8 +104,9 @@ for f in INTERACT_FEATS:
     X1[f"{f}_z_x_year"] = df[f + "_z"].values * yc
 
 X1_ols = sm.add_constant(X1)
-ols1_uw = sm.OLS(y, X1_ols).fit()
-ols1_wt = sm.WLS(y, X1_ols, weights=w).fit()
+groups_dep1 = df["dep_code"].values
+ols1_uw = sm.OLS(y, X1_ols).fit(cov_type='cluster', cov_kwds={'groups': groups_dep1})
+ols1_wt = sm.WLS(y, X1_ols, weights=w).fit(cov_type='cluster', cov_kwds={'groups': groups_dep1})
 
 
 def interpret_interaction(f_name, coef, pval, group):
@@ -160,14 +167,14 @@ r()
 # ======================================================================
 r("=" * 72)
 r("TEST 2 -- PRE/POST SPLIT INDICATOR (robustness)")
-r("early = 2012-2015  |  late = 2019-2021")
-r("2016-2018 DROPPED: SIDE reform inflates firm counts those years.")
+r("early = 2012-2014  |  late = 2019-2021")
+r("2015-2018 DROPPED: SIDE reform inflates firm counts 2016-2018; 2015 dropped for clean separation.")
 r("OLS: firm_rate ~ 8 features_z + late")
 r("     + (unemp_z x late) + (edu_z x late)")
 r("=" * 72)
 r()
 
-mask_early = df["year"].between(2012, 2015)
+mask_early = df["year"].between(2012, 2014)
 mask_late  = df["year"].between(2019, 2021)
 df2 = df[mask_early | mask_late].copy().reset_index(drop=True)
 df2["late"] = (df2["year"] >= 2019).astype(float)
@@ -186,8 +193,9 @@ X2["unemployment_rate_z_x_late"] = df2["unemployment_rate_z"].values * df2["late
 X2["edu_share_sup_z_x_late"]     = df2["edu_share_sup_z"].values    * df2["late"].values
 
 X2_ols  = sm.add_constant(X2)
-ols2_uw = sm.OLS(y2, X2_ols).fit()
-ols2_wt = sm.WLS(y2, X2_ols, weights=w2).fit()
+groups_dep2 = df2["dep_code"].values
+ols2_uw = sm.OLS(y2, X2_ols).fit(cov_type='cluster', cov_kwds={'groups': groups_dep2})
+ols2_wt = sm.WLS(y2, X2_ols, weights=w2).fit(cov_type='cluster', cov_kwds={'groups': groups_dep2})
 
 t2_results = {}
 for spec_name, ols_res in [("Unweighted", ols2_uw), ("Pop-weighted", ols2_wt)]:
@@ -375,7 +383,7 @@ For necessity features: positive = necessity strengthens; negative = weakens.
 
 **Drop 2016-2018 entirely** to exclude the SIDE reform measurement artifact
 (INSEE changed auto-entrepreneur counting rules, inflating registered firm
-counts in those years). Comparing early (2012-2015, n={n_early}) vs
+counts in those years). Comparing early (2012-2014, n={n_early}) vs
 late (2019-2021, n={n_late}).
 
 **Model:** OLS / WLS

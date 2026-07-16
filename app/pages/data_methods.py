@@ -2,11 +2,11 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import streamlit as st
-from utils import page_header, source_card, BLUE, RED
+from utils import page_header, source_card, render_footer, BLUE, RED
 
 page_header(
     "Methods",
-    "Six official sources · each cross-checked before entering the model",
+    "Nine official sources · each cross-checked before entering the model",
 )
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -14,10 +14,24 @@ page_header(
 # ══════════════════════════════════════════════════════════════════════════
 st.markdown('<h3 class="ri-section-h">Data sources</h3>', unsafe_allow_html=True)
 
+_FILOSOFI_YEAR_LINKS = {
+    2012: "https://www.insee.fr/fr/statistiques/2043745",
+    2013: "https://www.insee.fr/fr/statistiques/2388413",
+    2014: "https://www.insee.fr/fr/statistiques/3126151",
+    2015: "https://www.insee.fr/fr/statistiques/3560118",
+    2016: "https://www.insee.fr/fr/statistiques/4190006",
+    2017: "https://www.insee.fr/fr/statistiques/4291712",
+    2018: "https://www.insee.fr/fr/statistiques/5009218",
+    2019: "https://www.insee.fr/fr/statistiques/6036907",
+    2020: "https://www.insee.fr/fr/statistiques/6692220",
+    2021: "https://www.insee.fr/fr/statistiques/7756855",
+}
+
 SOURCES = [
     {
         "name":       "Filosofi: Income, Poverty &amp; Inequality",
-        "url":        "https://www.insee.fr/fr/statistiques/2043745",
+        "url":        None,
+        "year_links": _FILOSOFI_YEAR_LINKS,
         "producer":   "INSEE · Fichier Localisé Social et Fiscal",
         "desc":       (
             "Household income deciles and quartiles, Gini coefficient, S80/S20, poverty rates "
@@ -88,16 +102,92 @@ SOURCES = [
             "<b>Verification:</b> range and ranking cross-checked against published INSEE typology."
         ),
     },
+    {
+        "name":       "Live Births (DS_NAISSANCES_FECONDITE_SERIES)",
+        "url":        "https://www.data.gouv.fr/datasets/naissances-et-fecondite-series-longues",
+        "producer":   "INSEE · Naissances et fécondité — séries longues",
+        "desc":       (
+            "Live births at place of residence (<code>LVB_PLACE_RES</code>, all ages, <code>AGE=_T</code>), "
+            "2012–2021, metropolitan departments only. "
+            "Residence attribution preferred over place of registration (<code>LVB_PLACE_REG</code>) for a "
+            "panel of departmental characteristics. "
+            "Panel columns: <code>live_births</code> (raw count) and <code>birth_rate</code> "
+            "(live births per 1,000 inhabitants, computed at merge time using population denominator). "
+            "<b>Verification:</b> 960/960 (dep, year) pairs; 0 nulls; "
+            "rate range 6.5–18.8 per 1,000, consistent with published INSEE natality profiles."
+        ),
+    },
+    {
+        "name":       "Deaths (DS_ETAT_CIVIL_DECES_COMMUNES)",
+        "url":        "https://www.data.gouv.fr/datasets/deces-et-mortalite-series-longues/",
+        "producer":   "INSEE · Décès et mortalité — séries longues",
+        "desc":       (
+            "Deaths by department of occurrence (<code>EC_MEASURE=DTH</code>, <code>OBS_STATUS=A</code> only), "
+            "2012–2021, metropolitan departments only. "
+            "<code>OBS_STATUS=M</code> (missing/not applicable) rows dropped throughout. "
+            "Panel columns: <code>deaths</code> (raw count) and <code>death_rate</code> "
+            "(deaths per 1,000 inhabitants, computed at merge time). "
+            "<b>Verification:</b> 960/960 (dep, year) pairs; 0 nulls; "
+            "rate range 5.3–17.4 per 1,000, consistent with published INSEE mortality profiles."
+        ),
+    },
+    {
+        "name":       "Marriages (INSEE État civil DEP6 annual files)",
+        "url":        None,
+        "year_links": {
+            2012: "https://www.insee.fr/fr/statistiques/2020625",
+            2013: "https://www.insee.fr/fr/statistiques/2020490",
+            2014: "https://www.insee.fr/fr/statistiques/1913527",
+            2015: "https://www.insee.fr/fr/statistiques/2561535",
+            2016: "https://www.insee.fr/fr/statistiques/3317603",
+            2017: "https://www.insee.fr/fr/statistiques/3704307",
+            2018: "https://www.insee.fr/fr/statistiques/4273672",
+            2019: "https://www.insee.fr/fr/statistiques/5012966",
+            2020: "https://www.insee.fr/fr/statistiques/6045407",
+            2021: "https://www.insee.fr/fr/statistiques/6790710",
+        },
+        "producer":   "INSEE · État civil, DEP6 (mariages par département et région)",
+        "desc":       (
+            "Total marriages (HF + same-sex HH + FF) by department of marriage, 2012–2021. "
+            "Three file formats across years: single-sheet XLS (2012–2013), multi-sheet XLS/XLSX "
+            "with HF/HH/FF sheets (2014–2017, 2020), and CSV with REGDEP_MAR codes (2018, 2019, 2021). "
+            "<b>Critical:</b> CSV files count married <em>persons</em>, not weddings (2 per wedding) — "
+            "NBMAR divided by 2 to harmonise with XLS files. "
+            "Geography of marriage (not residence). "
+            "Panel columns: <code>marriages</code> (weddings) and <code>marriage_rate</code> "
+            "(per 1,000 inhabitants). "
+            "<b>Verification:</b> 960/960 (dep, year) pairs; national totals consistent with INSEE published "
+            "figures (239,840 in 2012; 150,545 in 2020 COVID drop; ~213,000 recovery in 2021); "
+            "rate range 1.8–4.5 per 1,000."
+        ),
+    },
 ]
 
 _LINK = (
     '<a href="{url}" target="_blank" rel="noopener noreferrer" '
     'style="color:inherit;text-decoration:underline;text-decoration-color:#aaa;">{name}</a>'
 )
+
+def _year_btns(year_links: dict) -> str:
+    return "".join(
+        f'<a href="{u}" target="_blank" rel="noopener noreferrer" class="ri-year-btn">{y}</a>'
+        for y, u in year_links.items()
+    )
+
+def _src_btn(url: str) -> str:
+    return f'<a href="{url}" target="_blank" rel="noopener noreferrer" class="ri-src-btn">Open source</a>'
+
 for src in SOURCES:
-    url = src.get("url", "")
+    url = src.get("url") or ""
+    year_links = src.get("year_links", {})
     name = _LINK.format(url=url, name=src["name"]) if url else src["name"]
-    st.markdown(source_card(name, src["producer"], src["desc"]), unsafe_allow_html=True)
+    if year_links:
+        links_html = _year_btns(year_links)
+    elif url:
+        links_html = _src_btn(url)
+    else:
+        links_html = ""
+    st.markdown(source_card(name, src["producer"], src["desc"], links_html), unsafe_allow_html=True)
 
 st.divider()
 
@@ -131,9 +221,23 @@ LIMITATIONS = [
         "characteristics changed.",
     ),
     (
-        "Education interpolated.",
-        "Higher-ed share is observed at three census points (2011, 2016, 2022) and linearly interpolated "
-        "for all other years. Year-to-year variation in this variable is artificial by construction.",
+        "Education interpolated against a post-panel anchor.",
+        "Higher-ed share is observed at census snapshots (2011, 2016, 2022) and linearly interpolated. "
+        "The 2022 anchor lies outside the panel window, so 2017–2021 interpolated values embed future "
+        "information. The LOYO 2021 fold is mildly contaminated; year-to-year variation in this variable "
+        "is artificial by construction.",
+    ),
+    (
+        "pct_urban is a single vintage classification applied to all years.",
+        "The density classification (Grille de densité, RP2021/2025 vintage) is time-invariant and applied "
+        "uniformly across 2012–2021. It is a forward look-ahead for early years and contributes only "
+        "cross-sectional signal.",
+    ),
+    (
+        "pct_wages uses a different income concept from the other income variables.",
+        "pct_wages is derived from the DEC income concept, while q2_disp, gini_disp, and poverty_rate_disp "
+        "use the DISP (disposable income) concept. Cross-concept comparisons within the feature matrix "
+        "should be treated with caution.",
     ),
     (
         "Doctor density as amenity proxy.",
@@ -160,21 +264,15 @@ st.markdown('<h3 class="ri-section-h">Publication</h3>', unsafe_allow_html=True)
 st.markdown(
     """
 <div class="ri-preprint">
-    <strong>Preprint forthcoming</strong><br>
-    <span style="color:#888;font-size:0.88rem">
-        Working paper will be posted to SSRN / EconPapers.<br>
-        Link: <em>TODO — add preprint URL when posted</em>
+    <strong>Preprint</strong><br>
+    <em>Evidence Against the Necessity Hypothesis of Entrepreneurship: A Panel Machine-Learning Analysis of French Departments, 2012&ndash;2021</em><br>
+    <span style="font-size:0.88rem">
+        Zenodo: #TODO &nbsp;|&nbsp; DOI: #TODO
     </span>
     <br><br>
-    <strong>Citation (placeholder)</strong><br>
+    <strong>Citation</strong><br>
     <span style="font-family:monospace;font-size:0.82rem;color:#444">
-        Author (2026). <em>Régions Inégales: Opportunity vs. Necessity Entrepreneurship
-        Across French Departments, 2012–2021.</em> Working paper. TODO-REAL: add DOI.
-    </span>
-    <br><br>
-    <strong>Data &amp; replication</strong><br>
-    <span style="color:#888;font-size:0.88rem">
-        All six source files are publicly available from INSEE and DREES. See source cards above for download URLs.
+        #TODO
     </span>
 </div>
 """,
@@ -205,5 +303,7 @@ st.markdown(
 st.markdown("<br>", unsafe_allow_html=True)
 st.caption(
     f"Panel: 960 observations · 96 metropolitan departments × 10 years (2012–2021) · "
-    f"Model: XGBoost + SHAP · Validation: LODO R² = 0.674"
+    f"Model: XGBoost + SHAP · Validation: LODO R² = 0.678"
 )
+
+render_footer()

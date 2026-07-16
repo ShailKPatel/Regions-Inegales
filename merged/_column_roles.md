@@ -1,7 +1,8 @@
-# Column Roles — france_panel_master.csv (960 × 45)
+# Column Roles — france_panel_master.csv (960 × 51)
 
-Generated: 2026-06-13  
-Panel: 96 French departments × 10 years (2012–2021)
+Generated: 2026-07-16  
+Source file covers: 96 French departments × 10 years (2012–2021)
+Model panel: 960 rows (2012–2021)
 
 ---
 
@@ -45,6 +46,12 @@ Panel: 96 French departments × 10 years (2012–2021)
 | doctor_density_per_100k | CANDIDATE FEATURE | float64 | GPs per 100k inhabitants; range [171, 894] |
 | edu_share_sup | CANDIDATE FEATURE | float64 | % with higher-education diploma; interpolated 2012–2021 except anchor 2016; monotonic per dept |
 | pct_urban | CANDIDATE FEATURE | float64 | % population in urban units; static per dept; range [10.3, 100.0] |
+| live_births | CANDIDATE FEATURE | int64 | Live births at place of residence (LVB_PLACE_RES); source: INSEE DS_NAISSANCES_FECONDITE_SERIES |
+| birth_rate | CANDIDATE FEATURE | float64 | Live births per 1,000 inhabitants (live_births / pop_jan1 × 1000); computed at merge time |
+| deaths | CANDIDATE FEATURE | int64 | Deaths at place of residence (DTH); source: INSEE DS_ETAT_CIVIL_DECES_COMMUNES |
+| death_rate | CANDIDATE FEATURE | float64 | Deaths per 1,000 inhabitants (deaths / pop_jan1 × 1000); computed at merge time |
+| marriages | CANDIDATE FEATURE | int64 | Total marriages (HF+HH+FF) by dept of marriage; source: INSEE DEP6 annual files 2012–2021 |
+| marriage_rate | CANDIDATE FEATURE | float64 | Marriages per 1,000 inhabitants (marriages / pop_jan1 × 1000); computed at merge time |
 | total_firm_creations | TARGET-RELATED | int64 | Primary outcome candidate; must NOT be used as feature |
 | creations_individual | TARGET-RELATED | int64 | Legal-form breakdown of total; collinear with total |
 | creations_sarl | TARGET-RELATED | int64 | Legal-form breakdown |
@@ -63,9 +70,9 @@ Panel: 96 French departments × 10 years (2012–2021)
 |------|-------|
 | KEY | 2 |
 | METADATA | 7 |
-| CANDIDATE FEATURE | 27 |
+| CANDIDATE FEATURE | 33 |
 | TARGET-RELATED | 9 |
-| **Total** | **45** |
+| **Total** | **47** |
 
 ---
 

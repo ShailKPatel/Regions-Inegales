@@ -4,6 +4,11 @@ Tests whether opportunity-vs-necessity balance differs by density context.
 Read-only on master. Writes figures/ and model/split_findings.md.
 """
 
+import sys, os
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_ROOT, "scripts"))
+from panel_config import PANEL_START, PANEL_END
+
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -67,10 +72,8 @@ GROUP_COLOR = {
 xgb_params_cv = dict(
     max_depth=4, n_estimators=300, learning_rate=0.05,
     subsample=0.8, colsample_bytree=0.8, random_state=RNG,
-    early_stopping_rounds=20, eval_metric="mae",
 )
-xgb_params_full = {k: v for k, v in xgb_params_cv.items()
-                   if k != "early_stopping_rounds"}
+xgb_params_full = xgb_params_cv
 
 report = []
 
@@ -96,6 +99,7 @@ pop["dep_code"] = pop["dep_code"].str.strip('"')
 
 df = master.merge(pop, on=["dep_code", "year"], how="left")
 assert df["pop_jan1"].isna().sum() == 0, "unmatched pop rows"
+df = df[(df["year"] >= PANEL_START) & (df["year"] <= PANEL_END)].reset_index(drop=True)
 df[TARGET] = df["total_firm_creations"] / df["pop_jan1"] * 1000
 
 assert df[FEATURES].isna().sum().sum() == 0
@@ -134,23 +138,19 @@ if n_dep_rural < 30:
 r()
 
 # ── helpers ────────────────────────────────────────────────────────────────
-def run_lodo(X_, y_, dep_codes):
-    gkf = GroupKFold(n_splits=dep_codes.nunique())
+def run_lodo_shap(X_, y_, dep_codes):
+    gkf    = GroupKFold(n_splits=dep_codes.nunique())
     splits = list(gkf.split(X_, y_, groups=dep_codes.values))
-    oof = np.full(len(y_), np.nan)
+    oof_pred = np.full(len(y_), np.nan)
+    shap_oof = np.zeros((len(X_), len(FEATURES)), dtype=float)
     for tr, te in splits:
         m = xgb.XGBRegressor(**xgb_params_cv)
-        m.fit(X_.iloc[tr], y_.iloc[tr],
-              eval_set=[(X_.iloc[te], y_.iloc[te])], verbose=False)
-        oof[te] = m.predict(X_.iloc[te])
-    return r2_score(y_, oof)
-
-def fit_full_shap(X_, y_):
-    m = xgb.XGBRegressor(**xgb_params_full)
-    m.fit(X_, y_)
-    sv = shap.TreeExplainer(m).shap_values(X_)
-    mas = pd.Series(np.abs(sv).mean(axis=0), index=FEATURES)
-    return m, sv, mas
+        m.fit(X_.iloc[tr], y_.iloc[tr], verbose=False)
+        oof_pred[te] = m.predict(X_.iloc[te])
+        shap_oof[te] = shap.TreeExplainer(m).shap_values(X_.iloc[te])
+    r2  = r2_score(y_, oof_pred)
+    mas = pd.Series(np.abs(shap_oof).mean(axis=0), index=FEATURES)
+    return r2, shap_oof, mas
 
 def shap_group_totals(mas):
     opp = mas[OPPORTUNITY].sum()
@@ -159,12 +159,16 @@ def shap_group_totals(mas):
     tot = opp + nec + oth
     return opp, nec, oth, tot
 
-def ols_unemp(X_, y_, weights=None):
+def ols_unemp(X_, y_, weights=None, groups=None):
     X_ols = sm.add_constant(X_)
     if weights is not None:
-        res = sm.WLS(y_, X_ols, weights=weights).fit()
+        model = sm.WLS(y_, X_ols, weights=weights)
     else:
-        res = sm.OLS(y_, X_ols).fit()
+        model = sm.OLS(y_, X_ols)
+    if groups is not None:
+        res = model.fit(cov_type='cluster', cov_kwds={'groups': groups})
+    else:
+        res = model.fit()
     coef = res.params["unemployment_rate"]
     pval = res.pvalues["unemployment_rate"]
     return coef, pval
@@ -193,24 +197,33 @@ y_full = df[TARGET].copy()
 dep_full = df["dep_code"]
 w_full = df["pop_jan1"].values
 
-r("Running LODO on full panel ...")
-r2_full = run_lodo(X_full, y_full, dep_full)
+r("Running LODO + OOF SHAP on full panel ...")
+r2_full, sv_full, mas_full = run_lodo_shap(X_full, y_full, dep_full)
 r(f"  LODO R² = {r2_full:.3f}")
 
-_, sv_full, mas_full = fit_full_shap(X_full, y_full)
 opp_f, nec_f, oth_f, tot_f = shap_group_totals(mas_full)
 
-coef_uw_f, pval_uw_f = ols_unemp(X_full, y_full)
-coef_wt_f, pval_wt_f = ols_unemp(X_full, y_full, weights=w_full)
+coef_uw_f, pval_uw_f = ols_unemp(X_full, y_full, groups=dep_full.values)
+coef_wt_f, pval_wt_f = ols_unemp(X_full, y_full, weights=w_full, groups=dep_full.values)
 unemp_rank_f = shap_rank(mas_full, "unemployment_rate")
+
+_X_ols_f = sm.add_constant(X_full)
+_ols_f_uw = sm.OLS(y_full, _X_ols_f).fit(cov_type='cluster', cov_kwds={'groups': dep_full.values})
+_ols_f_wt = sm.WLS(y_full, _X_ols_f, weights=w_full).fit(cov_type='cluster', cov_kwds={'groups': dep_full.values})
+pov_coef_uw_f = _ols_f_uw.params["poverty_rate_disp"]
+pov_pval_uw_f = _ols_f_uw.pvalues["poverty_rate_disp"]
+pov_coef_wt_f = _ols_f_wt.params["poverty_rate_disp"]
+pov_pval_wt_f = _ols_f_wt.pvalues["poverty_rate_disp"]
 
 r(f"  SHAP — Opp: {opp_f:.4f} ({opp_f/tot_f*100:.0f}%)  "
   f"Nec: {nec_f:.4f} ({nec_f/tot_f*100:.0f}%)  "
   f"Other: {oth_f:.4f} ({oth_f/tot_f*100:.0f}%)")
 r(f"  Opp/Nec ratio: {opp_f/nec_f:.2f}x")
 r(f"  Unemployment SHAP rank: {unemp_rank_f}/8")
-r(f"  OLS unemployment — UW: coef={coef_uw_f:+.4f} p={pval_uw_f:.3f} | "
-  f"WT: coef={coef_wt_f:+.4f} p={pval_wt_f:.3f}")
+r(f"  OLS unemployment   — UW: coef={coef_uw_f:+.4f} p={pval_uw_f:.3e} | "
+  f"WT: coef={coef_wt_f:+.4f} p={pval_wt_f:.3e}")
+r(f"  OLS poverty_rate   — UW: coef={pov_coef_uw_f:+.4f} p={pov_pval_uw_f:.3e} | "
+  f"WT: coef={pov_coef_wt_f:+.4f} p={pov_pval_wt_f:.3e}")
 r()
 
 # ── STEP 4: Urban subset ───────────────────────────────────────────────────
@@ -224,24 +237,33 @@ dep_urb = df_urban["dep_code"]
 w_urb = df_urban["pop_jan1"].values
 
 r(f"  {n_dep_urban} departments, {n_row_urban} rows")
-r("Running LODO on urban subset ...")
-r2_urb = run_lodo(X_urb, y_urb, dep_urb)
+r("Running LODO + OOF SHAP on urban subset ...")
+r2_urb, sv_urb, mas_urb = run_lodo_shap(X_urb, y_urb, dep_urb)
 r(f"  LODO R² = {r2_urb:.3f}")
 
-_, sv_urb, mas_urb = fit_full_shap(X_urb, y_urb)
 opp_u, nec_u, oth_u, tot_u = shap_group_totals(mas_urb)
 
-coef_uw_u, pval_uw_u = ols_unemp(X_urb, y_urb)
-coef_wt_u, pval_wt_u = ols_unemp(X_urb, y_urb, weights=w_urb)
+coef_uw_u, pval_uw_u = ols_unemp(X_urb, y_urb, groups=dep_urb.values)
+coef_wt_u, pval_wt_u = ols_unemp(X_urb, y_urb, weights=w_urb, groups=dep_urb.values)
 unemp_rank_u = shap_rank(mas_urb, "unemployment_rate")
+
+_X_ols_u = sm.add_constant(X_urb)
+_ols_u_uw = sm.OLS(y_urb, _X_ols_u).fit(cov_type='cluster', cov_kwds={'groups': dep_urb.values})
+_ols_u_wt = sm.WLS(y_urb, _X_ols_u, weights=w_urb).fit(cov_type='cluster', cov_kwds={'groups': dep_urb.values})
+pov_coef_uw_u = _ols_u_uw.params["poverty_rate_disp"]
+pov_pval_uw_u = _ols_u_uw.pvalues["poverty_rate_disp"]
+pov_coef_wt_u = _ols_u_wt.params["poverty_rate_disp"]
+pov_pval_wt_u = _ols_u_wt.pvalues["poverty_rate_disp"]
 
 r(f"  SHAP — Opp: {opp_u:.4f} ({opp_u/tot_u*100:.0f}%)  "
   f"Nec: {nec_u:.4f} ({nec_u/tot_u*100:.0f}%)  "
   f"Other: {oth_u:.4f} ({oth_u/tot_u*100:.0f}%)")
 r(f"  Opp/Nec ratio: {opp_u/nec_u:.2f}x")
 r(f"  Unemployment SHAP rank: {unemp_rank_u}/8")
-r(f"  OLS unemployment — UW: coef={coef_uw_u:+.4f} p={pval_uw_u:.3f} | "
-  f"WT: coef={coef_wt_u:+.4f} p={pval_wt_u:.3f}")
+r(f"  OLS unemployment   — UW: coef={coef_uw_u:+.4f} p={pval_uw_u:.3e} | "
+  f"WT: coef={coef_wt_u:+.4f} p={pval_wt_u:.3e}")
+r(f"  OLS poverty_rate   — UW: coef={pov_coef_uw_u:+.4f} p={pov_pval_uw_u:.3e} | "
+  f"WT: coef={pov_coef_wt_u:+.4f} p={pov_pval_wt_u:.3e}")
 verdict_urb = necessity_verdict_str(coef_uw_u, pval_uw_u, coef_wt_u, pval_wt_u, "urban")
 r(f"  Necessity verdict (urban): {verdict_urb}")
 r()
@@ -257,16 +279,32 @@ dep_rur = df_rural["dep_code"]
 w_rur = df_rural["pop_jan1"].values
 
 r(f"  {n_dep_rural} departments, {n_row_rural} rows")
-r("Running LODO on rural subset ...")
-r2_rur = run_lodo(X_rur, y_rur, dep_rur)
+r("Running LODO + OOF SHAP on rural subset ...")
+r2_rur, sv_rur, mas_rur = run_lodo_shap(X_rur, y_rur, dep_rur)
 r(f"  LODO R² = {r2_rur:.3f}")
 
-_, sv_rur, mas_rur = fit_full_shap(X_rur, y_rur)
 opp_r, nec_r, oth_r, tot_r = shap_group_totals(mas_rur)
 
-coef_uw_r, pval_uw_r = ols_unemp(X_rur, y_rur)
-coef_wt_r, pval_wt_r = ols_unemp(X_rur, y_rur, weights=w_rur)
+_coef_uw_r_nc, _pval_uw_r_nc = ols_unemp(X_rur, y_rur)
+_coef_wt_r_nc, _pval_wt_r_nc = ols_unemp(X_rur, y_rur, weights=w_rur)
+coef_uw_r, pval_uw_r = ols_unemp(X_rur, y_rur, groups=dep_rur.values)
+coef_wt_r, pval_wt_r = ols_unemp(X_rur, y_rur, weights=w_rur, groups=dep_rur.values)
 unemp_rank_r = shap_rank(mas_rur, "unemployment_rate")
+
+# Also extract poverty for C-1 table
+X_ols_rur = sm.add_constant(X_rur)
+_ols_rur_uw_nc = sm.OLS(y_rur, X_ols_rur).fit()
+_ols_rur_wt_nc = sm.WLS(y_rur, X_ols_rur, weights=w_rur).fit()
+_ols_rur_uw_cl = sm.OLS(y_rur, X_ols_rur).fit(cov_type='cluster', cov_kwds={'groups': dep_rur.values})
+_ols_rur_wt_cl = sm.WLS(y_rur, X_ols_rur, weights=w_rur).fit(cov_type='cluster', cov_kwds={'groups': dep_rur.values})
+
+r("\nC-1 NON-CLUSTERED vs DEPARTMENT-CLUSTERED SE (rural subset):")
+for _feat in ["unemployment_rate", "poverty_rate_disp"]:
+    r(f"  {_feat}:")
+    r(f"    UW non-clustered: coef={_ols_rur_uw_nc.params[_feat]:+.4f}  p={_ols_rur_uw_nc.pvalues[_feat]:.3e}")
+    r(f"    UW clustered:     coef={_ols_rur_uw_cl.params[_feat]:+.4f}  p={_ols_rur_uw_cl.pvalues[_feat]:.3e}")
+    r(f"    WT non-clustered: coef={_ols_rur_wt_nc.params[_feat]:+.4f}  p={_ols_rur_wt_nc.pvalues[_feat]:.3e}")
+    r(f"    WT clustered:     coef={_ols_rur_wt_cl.params[_feat]:+.4f}  p={_ols_rur_wt_cl.pvalues[_feat]:.3e}")
 
 r(f"  SHAP — Opp: {opp_r:.4f} ({opp_r/tot_r*100:.0f}%)  "
   f"Nec: {nec_r:.4f} ({nec_r/tot_r*100:.0f}%)  "
@@ -294,8 +332,8 @@ X_int = sm.add_constant(df2[interaction_features])
 y_int = df2[TARGET]
 w_int = df2["pop_jan1"].values
 
-ols_int_uw = sm.OLS(y_int, X_int).fit()
-ols_int_wt = sm.WLS(y_int, X_int, weights=w_int).fit()
+ols_int_uw = sm.OLS(y_int, X_int).fit(cov_type='cluster', cov_kwds={'groups': df["dep_code"].values})
+ols_int_wt = sm.WLS(y_int, X_int, weights=w_int).fit(cov_type='cluster', cov_kwds={'groups': df["dep_code"].values})
 
 def row(name, res):
     c = res.params.get(name, np.nan)
@@ -310,7 +348,7 @@ wt_unemp_c,    wt_unemp_p,    wt_unemp_s    = row("unemployment_rate",  ols_int_
 wt_unemp_r_c,  wt_unemp_r_p,  wt_unemp_r_s  = row("unemp_x_rural",      ols_int_wt)
 wt_edu_r_c,    wt_edu_r_p,    wt_edu_r_s    = row("edu_x_rural",         ols_int_wt)
 
-r("Pooled OLS with interactions (960 rows, full panel):")
+r(f"Pooled OLS with interactions ({len(df)} rows, full panel):")
 r(f"  Unweighted — unemployment_rate:     coef={uw_unemp_c:+.4f}  p={uw_unemp_p:.3f} {uw_unemp_s}")
 r(f"  Unweighted — unemp_x_rural:         coef={uw_unemp_r_c:+.4f}  p={uw_unemp_r_p:.3f} {uw_unemp_r_s}")
 r(f"  Unweighted — edu_x_rural:           coef={uw_edu_r_c:+.4f}  p={uw_edu_r_p:.3f} {uw_edu_r_s}")
@@ -440,7 +478,7 @@ def int_sig_summary():
             f"WT p={wt_unemp_r_p:.3f}{sig_star(wt_unemp_r_p)}), "
             f"with coef {uw_unemp_r_c:+.4f} (UW). "
             f"This confirms the effect of unemployment on firm creation genuinely "
-            f"differs between rural and urban contexts using all 960 observations."
+            f"differs between rural and urban contexts using all {len(df)} observations."
         )
     else:
         lines.append(
@@ -472,8 +510,8 @@ _Generated by model/split_analysis.py_
 
 ## Context
 
-This analysis tests whether the full-panel result (opportunity features 4x
-more important than necessity, SHAP 60% vs 15%) holds uniformly across
+This analysis tests whether the full-panel result (opportunity features {opp_f/nec_f:.1f}x
+more important than necessity, SHAP {opp_f/tot_f*100:.0f}% vs {nec_f/tot_f*100:.0f}%) holds uniformly across
 density contexts, or whether necessity entrepreneurship re-emerges in
 rural France.
 
@@ -533,7 +571,7 @@ Necessity's share rises modestly in rural areas ({nec_r/tot_r*100:.0f}% vs
 
 ## Interaction Model — Rigorous Cross-Check
 
-Pooled OLS on 960 rows with added terms:
+Pooled OLS on {len(df)} rows with added terms:
 `unemp_x_rural = unemployment_rate × is_rural`
 `edu_x_rural = edu_share_sup × is_rural`
 

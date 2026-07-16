@@ -4,6 +4,11 @@ Reads merged/france_panel_master.csv (read-only) + sources/population_insee.csv.
 Writes figures to figures/, metrics to model/metrics.md.
 """
 
+import sys, os
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_ROOT, "scripts"))
+from panel_config import PANEL_START, PANEL_END
+
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -52,6 +57,7 @@ pop["dep_code"] = pop["dep_code"].str.strip('"')
 
 df = master.merge(pop, on=["dep_code", "year"], how="left")
 assert df["pop_jan1"].isna().sum() == 0, "unmatched pop_jan1 rows after merge"
+df = df[(df["year"] >= PANEL_START) & (df["year"] <= PANEL_END)].reset_index(drop=True)
 
 df[TARGET] = df["total_firm_creations"] / df["pop_jan1"] * 1000
 
@@ -84,18 +90,12 @@ xgb_params = dict(
     subsample=0.8,
     colsample_bytree=0.8,
     random_state=RNG,
-    early_stopping_rounds=20,
-    eval_metric="mae",
 )
 
 
 def fit_predict_oof(X, y, train_idx, test_idx):
     model = xgb.XGBRegressor(**xgb_params)
-    model.fit(
-        X.iloc[train_idx], y.iloc[train_idx],
-        eval_set=[(X.iloc[test_idx], y.iloc[test_idx])],
-        verbose=False,
-    )
+    model.fit(X.iloc[train_idx], y.iloc[train_idx], verbose=False)
     pred = model.predict(X.iloc[test_idx])
     return pred
 
@@ -144,47 +144,87 @@ log(f"{'Random 10-fold (leaky baseline)':<45}{r2_kfold:>10.4f}{mae_kfold:>10.4f}
 overfit_gap = r2_kfold - r2_lodo
 log(f"\nOverfitting gap (random KFold R2 - LODO R2): {overfit_gap:.4f}")
 
-# Full-data XGBoost fit (used later for SHAP); no early stopping eval set needed,
-# but XGBRegressor requires eval_set if early_stopping_rounds is set -> reuse all data.
-xgb_full_params = dict(xgb_params)
-xgb_full_params.pop("early_stopping_rounds")
-xgb_full = xgb.XGBRegressor(**xgb_full_params)
-xgb_full.fit(X, y)
-
-# OLS - unweighted
+# OLS with department-clustered standard errors (primary)
 X_ols = sm.add_constant(X)
-ols_unweighted = sm.OLS(y, X_ols).fit()
-log("\nOLS (unweighted) summary:")
+_ols_nc_uw     = sm.OLS(y, X_ols).fit()
+_ols_nc_wt     = sm.WLS(y, X_ols, weights=weights).fit()
+ols_unweighted = sm.OLS(y, X_ols).fit(cov_type='cluster', cov_kwds={'groups': groups_dep})
+ols_weighted   = sm.WLS(y, X_ols, weights=weights).fit(cov_type='cluster', cov_kwds={'groups': groups_dep})
+
+log("\nOLS (unweighted, department-clustered SE) summary:")
 log(str(ols_unweighted.summary()))
 
-# OLS - population weighted
-ols_weighted = sm.WLS(y, X_ols, weights=weights).fit()
-log("\nOLS (population-weighted) summary:")
+log("\nOLS (population-weighted, department-clustered SE) summary:")
 log(str(ols_weighted.summary()))
 
-log("\nOLS coefficient comparison (unweighted vs weighted):")
+log("\nOLS coefficient comparison (unweighted vs weighted, department-clustered SE):")
 coef_compare = pd.DataFrame({
     "coef_unweighted": ols_unweighted.params,
     "pval_unweighted": ols_unweighted.pvalues,
-    "coef_weighted": ols_weighted.params,
-    "pval_weighted": ols_weighted.pvalues,
+    "coef_weighted":   ols_weighted.params,
+    "pval_weighted":   ols_weighted.pvalues,
 })
 log(coef_compare.to_string())
 
-# ---------------------------------------------------------------------------
-# STEP 4 - SHAP
-# ---------------------------------------------------------------------------
-log("\n## STEP 4 - SHAP (global, full-data XGBoost fit)\n")
+log("\nC-1 NON-CLUSTERED vs DEPARTMENT-CLUSTERED SE (full panel):")
+for _feat in ["unemployment_rate", "poverty_rate_disp"]:
+    log(f"  {_feat}:")
+    log(f"    UW non-clustered: coef={_ols_nc_uw.params[_feat]:+.4f}  p={_ols_nc_uw.pvalues[_feat]:.3e}")
+    log(f"    UW clustered:     coef={ols_unweighted.params[_feat]:+.4f}  p={ols_unweighted.pvalues[_feat]:.3e}")
+    log(f"    WT non-clustered: coef={_ols_nc_wt.params[_feat]:+.4f}  p={_ols_nc_wt.pvalues[_feat]:.3e}")
+    log(f"    WT clustered:     coef={ols_weighted.params[_feat]:+.4f}  p={ols_weighted.pvalues[_feat]:.3e}")
 
-explainer = shap.TreeExplainer(xgb_full)
-shap_values = explainer.shap_values(X)
+# ---------------------------------------------------------------------------
+# STEP 4 - SHAP (OOF via LODO, 96 folds)
+# ---------------------------------------------------------------------------
+log("\n## STEP 4 - SHAP (OOF via LODO, 96 folds)\n")
+
+# In-sample SHAP for side-by-side comparison only
+_xgb_is = xgb.XGBRegressor(**xgb_params)
+_xgb_is.fit(X, y)
+_shap_insample = shap.TreeExplainer(_xgb_is).shap_values(X)
+_mas_insample  = pd.Series(np.abs(_shap_insample).mean(axis=0), index=FEATURES)
+
+# OOF SHAP — primary
+shap_values = np.zeros((len(X), len(FEATURES)), dtype=float)
+for tr, te in lodo_splits:
+    _m = xgb.XGBRegressor(**xgb_params)
+    _m.fit(X.iloc[tr], y.iloc[tr], verbose=False)
+    shap_values[te] = shap.TreeExplainer(_m).shap_values(X.iloc[te])
 
 mean_abs_shap = pd.Series(np.abs(shap_values).mean(axis=0), index=FEATURES).sort_values(ascending=False)
-log("Mean |SHAP| by feature (full data):")
-log(mean_abs_shap.to_string())
+
+_OPP = ["edu_share_sup", "q2_disp", "pct_urban", "doctor_density_per_100k"]
+_NEC = ["unemployment_rate", "poverty_rate_disp"]
+_OTH = ["gini_disp", "pct_wages"]
+
+log("C-2 IN-SAMPLE vs OOF MEAN |SHAP| COMPARISON:")
+log(f"  {'Feature':<30} {'In-sample':>10} {'OOF':>10}")
+log("  " + "-" * 52)
+for _feat in FEATURES:
+    log(f"  {_feat:<30} {_mas_insample[_feat]:>10.4f} {mean_abs_shap[_feat]:>10.4f}")
+
+_opp_is  = _mas_insample[_OPP].sum()
+_nec_is  = _mas_insample[_NEC].sum()
+_oth_is  = _mas_insample[_OTH].sum()
+_tot_is  = _opp_is + _nec_is + _oth_is
+_opp_oof = mean_abs_shap[_OPP].sum()
+_nec_oof = mean_abs_shap[_NEC].sum()
+_oth_oof = mean_abs_shap[_OTH].sum()
+_tot_oof = _opp_oof + _nec_oof + _oth_oof
+
+log("\nGroup shares:")
+log(f"  OPPORTUNITY : in-sample {_opp_is/_tot_is*100:.0f}%  OOF {_opp_oof/_tot_oof*100:.0f}%")
+log(f"  NECESSITY   : in-sample {_nec_is/_tot_is*100:.0f}%  OOF {_nec_oof/_tot_oof*100:.0f}%")
+log(f"  OTHER       : in-sample {_oth_is/_tot_is*100:.0f}%  OOF {_oth_oof/_tot_oof*100:.0f}%")
+log(f"  Opp/Nec     : in-sample {_opp_is/_nec_is:.2f}x  OOF {_opp_oof/_nec_oof:.2f}x")
+_unemp_rank_oof = list(mean_abs_shap.index).index("unemployment_rate") + 1
+log(f"  Unemployment rank (OOF): {_unemp_rank_oof}/8  opportunity dominant: {_opp_oof > _nec_oof}")
 
 gini_rank = list(mean_abs_shap.index).index("gini_disp") + 1
-log(f"\ngini_disp SHAP importance rank: {gini_rank} of {len(FEATURES)}")
+log(f"\ngini_disp SHAP importance rank (OOF): {gini_rank} of {len(FEATURES)}")
+log("\nMean |SHAP| by feature (OOF):")
+log(mean_abs_shap.to_string())
 
 plt.figure()
 shap.summary_plot(shap_values, X, show=False)
@@ -198,33 +238,36 @@ plt.tight_layout()
 plt.savefig(f"{FIG_DIR}/model_shap_bar.png", dpi=150, bbox_inches="tight")
 plt.close()
 
-# Gini confound check: drop Ile-de-France
+# Gini confound check: drop Ile-de-France (OOF SHAP)
 mask_no_idf = ~df["dep_code"].isin(IDF_CODES)
-X_no_idf = X[mask_no_idf].reset_index(drop=True)
-y_no_idf = y[mask_no_idf].reset_index(drop=True)
+X_no_idf   = X[mask_no_idf].reset_index(drop=True)
+y_no_idf   = y[mask_no_idf].reset_index(drop=True)
 dep_no_idf = df.loc[mask_no_idf, "dep_code"].reset_index(drop=True)
 
-xgb_no_idf = xgb.XGBRegressor(**xgb_full_params)
-xgb_no_idf.fit(X_no_idf, y_no_idf)
+gkf_no_idf      = GroupKFold(n_splits=dep_no_idf.nunique())
+lodo_splits_no_idf = list(gkf_no_idf.split(X_no_idf, y_no_idf, groups=dep_no_idf.values))
 
-explainer_no_idf = shap.TreeExplainer(xgb_no_idf)
-shap_values_no_idf = explainer_no_idf.shap_values(X_no_idf)
+shap_no_idf     = np.zeros((len(X_no_idf), len(FEATURES)), dtype=float)
+oof_pred_no_idf = np.full(len(y_no_idf), np.nan)
+for tr, te in lodo_splits_no_idf:
+    _m = xgb.XGBRegressor(**xgb_params)
+    _m.fit(X_no_idf.iloc[tr], y_no_idf.iloc[tr], verbose=False)
+    oof_pred_no_idf[te] = _m.predict(X_no_idf.iloc[te])
+    shap_no_idf[te]     = shap.TreeExplainer(_m).shap_values(X_no_idf.iloc[te])
+
+r2_lodo_no_idf  = r2_score(y_no_idf, oof_pred_no_idf)
+mae_lodo_no_idf = mean_absolute_error(y_no_idf, oof_pred_no_idf)
+log(f"\nLeave-One-Department-Out, NO IdF (XGB): OOF R2 = {r2_lodo_no_idf:.4f}, OOF MAE = {mae_lodo_no_idf:.4f}")
+
 mean_abs_shap_no_idf = pd.Series(
-    np.abs(shap_values_no_idf).mean(axis=0), index=FEATURES
+    np.abs(shap_no_idf).mean(axis=0), index=FEATURES
 ).sort_values(ascending=False)
 gini_rank_no_idf = list(mean_abs_shap_no_idf.index).index("gini_disp") + 1
 
-log("\nGINI CONFOUND CHECK - with vs without Ile-de-France (75,77,78,91,92,93,94,95):")
+log("\nGINI CONFOUND CHECK (OOF) - with vs without Ile-de-France (75,77,78,91,92,93,94,95):")
 log(f"  WITH IdF:    gini_disp mean|SHAP| = {mean_abs_shap['gini_disp']:.4f}, rank = {gini_rank}/{len(FEATURES)}")
 log(f"  WITHOUT IdF: gini_disp mean|SHAP| = {mean_abs_shap_no_idf['gini_disp']:.4f}, rank = {gini_rank_no_idf}/{len(FEATURES)}")
-
-# OOF R2 without IdF, using LODO on remaining departments
-gkf_no_idf = GroupKFold(n_splits=dep_no_idf.nunique())
-lodo_splits_no_idf = list(gkf_no_idf.split(X_no_idf, y_no_idf, groups=dep_no_idf.values))
-r2_lodo_no_idf, mae_lodo_no_idf, _ = run_cv_scheme(
-    X_no_idf, y_no_idf, lodo_splits_no_idf, "Leave-One-Department-Out, NO IdF (XGB)"
-)
-
+log(f"  Gini rank stable OOF: {gini_rank == gini_rank_no_idf}")
 log(f"\nLODO R2 with IdF: {r2_lodo:.4f}  |  LODO R2 without IdF: {r2_lodo_no_idf:.4f}")
 
 # ---------------------------------------------------------------------------
@@ -247,13 +290,13 @@ summary_md.append("\n## OLS R2\n")
 summary_md.append(f"- Unweighted OLS R2: {ols_unweighted.rsquared:.4f}\n")
 summary_md.append(f"- Population-weighted OLS R2: {ols_weighted.rsquared:.4f}\n")
 
-summary_md.append("\n## OLS coefficients (unweighted vs weighted)\n")
+summary_md.append("\n## OLS coefficients (unweighted vs weighted, department-clustered SE)\n")
 summary_md.append(coef_compare.to_markdown() + "\n")
 
-summary_md.append("\n## SHAP top features (mean |SHAP|, full data)\n")
+summary_md.append("\n## SHAP top features (mean |SHAP|, OOF via LODO)\n")
 summary_md.append(mean_abs_shap.to_markdown() + "\n")
 
-summary_md.append("\n## Gini confound check (with vs without Ile-de-France)\n")
+summary_md.append("\n## Gini confound check (OOF SHAP, with vs without Ile-de-France)\n")
 summary_md.append(f"- WITH IdF: gini_disp mean|SHAP| = {mean_abs_shap['gini_disp']:.4f}, rank {gini_rank}/{len(FEATURES)}; LODO R2 = {r2_lodo:.4f}\n")
 summary_md.append(f"- WITHOUT IdF: gini_disp mean|SHAP| = {mean_abs_shap_no_idf['gini_disp']:.4f}, rank {gini_rank_no_idf}/{len(FEATURES)}; LODO R2 = {r2_lodo_no_idf:.4f}\n")
 

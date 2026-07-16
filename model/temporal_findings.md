@@ -27,12 +27,12 @@ For necessity features: positive = necessity strengthens; negative = weakens.
 
 | Group | Feature | Coef-UW | p-UW | Coef-WLS | p-WLS | Verdict |
 |---|---|---|---|---|---|---|
-| Necessity    | Unemployment rate         |  -0.0485 |  0.0817 |  -0.1449 |  0.0001 | WEAKENING (both specs) |
-| Necessity    | Poverty rate              |  +0.2230 |  0.0000 |  +0.3276 |  0.0000 | STRENGTHENING (both specs) |
-| Opportunity  | Higher-ed share           |  +0.1009 |  0.0057 |  +0.1623 |  0.0000 | STRENGTHENING (both specs) |
-| Opportunity  | Median income             |  +0.2539 |  0.0000 |  +0.1534 |  0.0015 | STRENGTHENING (both specs) |
+| Necessity    | Unemployment rate         |  -0.0829 |  0.0331 |  -0.1600 |  0.0001 | WEAKENING (both specs) |
+| Necessity    | Poverty rate              |  +0.2374 |  0.0000 |  +0.2869 |  0.0000 | STRENGTHENING (both specs) |
+| Opportunity  | Higher-ed share           |  +0.0708 |  0.0769 |  +0.1457 |  0.0000 | STRENGTHENING (both specs) |
+| Opportunity  | Median income             |  +0.2951 |  0.0000 |  +0.1746 |  0.0005 | STRENGTHENING (both specs) |
 
-**Full-model R^2 (unweighted): 0.8334 | (pop-weighted): 0.8859**
+**Full-model R^2 (unweighted): 0.8358 | (pop-weighted): 0.8860**
 
 ### Plain verdict (Test 1)
 
@@ -44,7 +44,7 @@ For necessity features: positive = necessity strengthens; negative = weakens.
 
 **Drop 2016-2018 entirely** to exclude the SIDE reform measurement artifact
 (INSEE changed auto-entrepreneur counting rules, inflating registered firm
-counts in those years). Comparing early (2012-2015, n=384) vs
+counts in those years). Comparing early (2012-2014, n=288) vs
 late (2019-2021, n=288).
 
 **Model:** OLS / WLS
@@ -53,11 +53,11 @@ late (2019-2021, n=288).
 
 | Term | Coef-UW | p-UW | Coef-WLS | p-WLS |
 |---|---|---|---|---|
-| unemployment_z x late | +0.3033 | 0.0586 | +0.6095 | 0.0013 |
-| edu_z x late | +1.6787 | 0.0000 | +1.8985 | 0.0000 |
-| late (intercept shift) | +3.7484 | 0.0000 | +4.0984 | 0.0000 |
+| unemployment_z x late | +0.3559 | 0.0485 | +0.7203 | 0.0400 |
+| edu_z x late | +1.7642 | 0.0000 | +2.0736 | 0.0000 |
+| late (intercept shift) | +2.2371 | 0.0000 | +1.5897 | 0.0330 |
 
-**Full-model R^2 (unweighted): 0.8280 | (pop-weighted): 0.8695**
+**Full-model R^2 (unweighted): 0.8350 | (pop-weighted): 0.8808**
 
 The `late` dummy absorbs the overall level shift in firm creation across
 periods. The interaction coefficients answer whether the *direction* of the
@@ -74,7 +74,7 @@ necessity/opportunity relationship changed -- not just the level.
 
 | Year | Note | Opp share | Nec share | Ratio |
 |---|---|---|---|---|
-| 2012 |                |  44.9% |  10.3% | 4.4x |
+| 2012 |                |  43.4% |  11.9% | 3.7x |
 | 2013 |                |  50.7% |  11.0% | 4.6x |
 | 2014 |                |  52.1% |  12.4% | 4.2x |
 | 2015 |                |  50.7% |  11.6% | 4.4x |

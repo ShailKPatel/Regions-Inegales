@@ -7,6 +7,11 @@ Thesis: French regional entrepreneurship follows an OPPORTUNITY model
 (education, income, urbanity) NOT a NECESSITY model (unemployment, poverty).
 """
 
+import sys, os
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_ROOT, "scripts"))
+from panel_config import PANEL_START, PANEL_END
+
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -88,6 +93,7 @@ pop["dep_code"] = pop["dep_code"].str.strip('"')
 
 df = master.merge(pop, on=["dep_code", "year"], how="left")
 assert df["pop_jan1"].isna().sum() == 0, "unmatched pop rows"
+df = df[(df["year"] >= PANEL_START) & (df["year"] <= PANEL_END)].reset_index(drop=True)
 df[TARGET] = df["total_firm_creations"] / df["pop_jan1"] * 1000
 
 X = df[FEATURES].copy()
@@ -105,15 +111,12 @@ r()
 xgb_params = dict(
     max_depth=4, n_estimators=300, learning_rate=0.05,
     subsample=0.8, colsample_bytree=0.8, random_state=RNG,
-    early_stopping_rounds=20, eval_metric="mae",
 )
-xgb_full_params = {k: v for k, v in xgb_params.items()
-                   if k != "early_stopping_rounds"}
+xgb_full_params = xgb_params
 
 def fit_predict_oof(X_, y_, tr, te):
     m = xgb.XGBRegressor(**xgb_params)
-    m.fit(X_.iloc[tr], y_.iloc[tr],
-          eval_set=[(X_.iloc[te], y_.iloc[te])], verbose=False)
+    m.fit(X_.iloc[tr], y_.iloc[tr], verbose=False)
     return m.predict(X_.iloc[te])
 
 def run_cv(X_, y_, splits):
@@ -147,21 +150,51 @@ r(f"  KFold R²={r2_kfold:.3f}  MAE={mae_kfold:.4f}")
 r(f"  Overfit gap (KFold − LODO): {r2_kfold - r2_lodo:.3f}")
 r()
 
-# ── STEP 4: Full-data XGBoost + SHAP ───────────────────────────────────────
+# ── STEP 4: OOF SHAP (LODO, 96 folds) ─────────────────────────────────────
 r("=" * 70)
-r("STEP 4 — FULL-DATA XGBOOST + SHAP")
+r("STEP 4 — OOF SHAP (LODO, 96 folds)")
 r("=" * 70)
 
-xgb_full = xgb.XGBRegressor(**xgb_full_params)
-xgb_full.fit(X, y)
+# In-sample SHAP for side-by-side comparison only
+_xgb_is = xgb.XGBRegressor(**xgb_full_params)
+_xgb_is.fit(X, y)
+_shap_insample = shap.TreeExplainer(_xgb_is).shap_values(X)
+_mas_insample  = pd.Series(np.abs(_shap_insample).mean(axis=0), index=FEATURES)
 
-explainer   = shap.TreeExplainer(xgb_full)
-shap_values = explainer.shap_values(X)   # (960, 8)
+# OOF SHAP — primary
+shap_values = np.zeros((len(X), len(FEATURES)), dtype=float)
+for tr, te in lodo_splits:
+    _m = xgb.XGBRegressor(**xgb_params)
+    _m.fit(X.iloc[tr], y.iloc[tr], verbose=False)
+    shap_values[te] = shap.TreeExplainer(_m).shap_values(X.iloc[te])
 
 mas = pd.Series(np.abs(shap_values).mean(axis=0), index=FEATURES)
 shap_order = mas.sort_values(ascending=False).index.tolist()
 
-r("Mean |SHAP| by feature (sorted):")
+r("C-2 IN-SAMPLE vs OOF MEAN |SHAP| COMPARISON:")
+r(f"  {'Feature':<30} {'In-sample':>10} {'OOF':>10}")
+r("  " + "-" * 52)
+for _f in FEATURES:
+    r(f"  {_f:<30} {_mas_insample[_f]:>10.4f} {mas[_f]:>10.4f}")
+
+_opp_is  = _mas_insample[OPPORTUNITY].sum()
+_nec_is  = _mas_insample[NECESSITY].sum()
+_oth_is  = _mas_insample[OTHER].sum()
+_tot_is  = _opp_is + _nec_is + _oth_is
+_opp_oof = mas[OPPORTUNITY].sum()
+_nec_oof = mas[NECESSITY].sum()
+_oth_oof = mas[OTHER].sum()
+_tot_oof = _opp_oof + _nec_oof + _oth_oof
+r(f"\nGroup shares (in-sample vs OOF):")
+r(f"  OPPORTUNITY : in-sample {_opp_is/_tot_is*100:.0f}%  OOF {_opp_oof/_tot_oof*100:.0f}%")
+r(f"  NECESSITY   : in-sample {_nec_is/_tot_is*100:.0f}%  OOF {_nec_oof/_tot_oof*100:.0f}%")
+r(f"  OTHER       : in-sample {_oth_is/_tot_is*100:.0f}%  OOF {_oth_oof/_tot_oof*100:.0f}%")
+r(f"  Opp/Nec     : in-sample {_opp_is/_nec_is:.2f}x  OOF {_opp_oof/_nec_oof:.2f}x")
+_unemp_rank_oof = list(mas.sort_values(ascending=False).index).index("unemployment_rate") + 1
+r(f"  Unemployment rank (OOF): {_unemp_rank_oof}/8  opportunity dominant: {_opp_oof > _nec_oof}")
+r()
+
+r("Mean |SHAP| by feature (OOF):")
 for f in shap_order:
     grp = GROUP_LABEL[f]
     r(f"  {FEATURE_DISPLAY[f]:<30} {mas[f]:.4f}  [{grp}]")
@@ -170,7 +203,7 @@ r()
 opp_total = mas[OPPORTUNITY].sum()
 nec_total = mas[NECESSITY].sum()
 oth_total = mas[OTHER].sum()
-r(f"GROUP TOTALS (mean |SHAP|):")
+r(f"GROUP TOTALS (mean |SHAP|, OOF):")
 r(f"  OPPORTUNITY : {opp_total:.4f}")
 r(f"  NECESSITY   : {nec_total:.4f}")
 r(f"  OTHER       : {oth_total:.4f}")
@@ -182,9 +215,11 @@ r("=" * 70)
 r("STEP 5 — OLS (full sample)")
 r("=" * 70)
 
-X_ols  = sm.add_constant(X)
-ols_uw = sm.OLS(y, X_ols).fit()
-ols_wt = sm.WLS(y, X_ols, weights=weights).fit()
+X_ols      = sm.add_constant(X)
+_ols_uw_nc = sm.OLS(y, X_ols).fit()
+_ols_wt_nc = sm.WLS(y, X_ols, weights=weights).fit()
+ols_uw = sm.OLS(y, X_ols).fit(cov_type='cluster', cov_kwds={'groups': groups_dep})
+ols_wt = sm.WLS(y, X_ols, weights=weights).fit(cov_type='cluster', cov_kwds={'groups': groups_dep})
 
 unemp_coef_uw = ols_uw.params["unemployment_rate"]
 unemp_pval_uw = ols_uw.pvalues["unemployment_rate"]
@@ -196,10 +231,18 @@ pov_pval_uw = ols_uw.pvalues["poverty_rate_disp"]
 pov_coef_wt = ols_wt.params["poverty_rate_disp"]
 pov_pval_wt = ols_wt.pvalues["poverty_rate_disp"]
 
-r("OLS unemployment_rate:")
+r("C-1 NON-CLUSTERED vs DEPARTMENT-CLUSTERED SE (full panel):")
+for _feat, _label in [("unemployment_rate", "unemployment_rate"), ("poverty_rate_disp", "poverty_rate_disp")]:
+    r(f"  {_label}:")
+    r(f"    UW non-clustered: coef={_ols_uw_nc.params[_feat]:+.4f}  p={_ols_uw_nc.pvalues[_feat]:.3e}")
+    r(f"    UW clustered:     coef={ols_uw.params[_feat]:+.4f}  p={ols_uw.pvalues[_feat]:.3e}")
+    r(f"    WT non-clustered: coef={_ols_wt_nc.params[_feat]:+.4f}  p={_ols_wt_nc.pvalues[_feat]:.3e}")
+    r(f"    WT clustered:     coef={ols_wt.params[_feat]:+.4f}  p={ols_wt.pvalues[_feat]:.3e}")
+r()
+r("OLS unemployment_rate (department-clustered SE):")
 r(f"  Unweighted: coef={unemp_coef_uw:+.4f}, p={unemp_pval_uw:.4f}")
 r(f"  Pop-weighted: coef={unemp_coef_wt:+.4f}, p={unemp_pval_wt:.4f}")
-r("OLS poverty_rate_disp:")
+r("OLS poverty_rate_disp (department-clustered SE):")
 r(f"  Unweighted: coef={pov_coef_uw:+.4f}, p={pov_pval_uw:.4e}")
 r(f"  Pop-weighted: coef={pov_coef_wt:+.4f}, p={pov_pval_wt:.4e}")
 r()
@@ -221,22 +264,24 @@ r("Running LODO without IdF ...")
 r2_lodo_ni, _ = run_cv(X_ni, y_ni, lodo_splits_ni)
 r(f"  LODO R² with IdF={r2_lodo:.3f}  |  without IdF={r2_lodo_ni:.3f}")
 
-xgb_ni = xgb.XGBRegressor(**xgb_full_params)
-xgb_ni.fit(X_ni, y_ni)
-shap_ni   = shap.TreeExplainer(xgb_ni).shap_values(X_ni)
-mas_ni    = pd.Series(np.abs(shap_ni).mean(axis=0), index=FEATURES)
-opp_ni    = mas_ni[OPPORTUNITY].sum()
-nec_ni    = mas_ni[NECESSITY].sum()
-r(f"  Opp > Nec without IdF: {opp_ni:.4f} > {nec_ni:.4f} → {opp_ni > nec_ni}")
+shap_ni = np.zeros((len(X_ni), len(FEATURES)), dtype=float)
+for tr, te in lodo_splits_ni:
+    _m = xgb.XGBRegressor(**xgb_params)
+    _m.fit(X_ni.iloc[tr], y_ni.iloc[tr], verbose=False)
+    shap_ni[te] = shap.TreeExplainer(_m).shap_values(X_ni.iloc[te])
+mas_ni = pd.Series(np.abs(shap_ni).mean(axis=0), index=FEATURES)
+opp_ni = mas_ni[OPPORTUNITY].sum()
+nec_ni = mas_ni[NECESSITY].sum()
+r(f"  Opp > Nec without IdF (OOF SHAP): {opp_ni:.4f} > {nec_ni:.4f} → {opp_ni > nec_ni}")
 
 X_ols_ni  = sm.add_constant(X_ni)
-ols_ni_uw = sm.OLS(y_ni, X_ols_ni).fit()
-ols_ni_wt = sm.WLS(y_ni, X_ols_ni, weights=w_ni).fit()
+ols_ni_uw = sm.OLS(y_ni, X_ols_ni).fit(cov_type='cluster', cov_kwds={'groups': dep_ni.values})
+ols_ni_wt = sm.WLS(y_ni, X_ols_ni, weights=w_ni).fit(cov_type='cluster', cov_kwds={'groups': dep_ni.values})
 unemp_coef_ni_uw = ols_ni_uw.params["unemployment_rate"]
 unemp_pval_ni_uw = ols_ni_uw.pvalues["unemployment_rate"]
 unemp_coef_ni_wt = ols_ni_wt.params["unemployment_rate"]
 unemp_pval_ni_wt = ols_ni_wt.pvalues["unemployment_rate"]
-r("  OLS unemployment_rate (no IdF):")
+r("  OLS unemployment_rate (no IdF, department-clustered SE):")
 r(f"    Unweighted: coef={unemp_coef_ni_uw:+.4f}, p={unemp_pval_ni_uw:.4f}")
 r(f"    Pop-weighted: coef={unemp_coef_ni_wt:+.4f}, p={unemp_pval_ni_wt:.4f}")
 r()
@@ -543,7 +588,7 @@ with *informalisation of labour* rather than genuine opportunity creation.
 ### Drop Île-de-France (departments 75, 77, 78, 91–95)
 
 Île-de-France inflates Paris-region metrics and may drive the gini finding.
-Removing these 8 departments (88 remaining, 880 dept-years):
+Removing these 8 departments (88 remaining, 792 dept-years):
 
 | | With IdF | Without IdF |
 |---|---|---|
