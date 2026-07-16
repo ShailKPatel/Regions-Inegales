@@ -72,7 +72,7 @@ generalization to new units. LODO is the headline.
 
 ## Main finding
 
-Opportunity beats necessity by a wide margin.
+Income and human capital dominate predicted firm-creation rates; the necessity/unemployment-push channel is rejected.
 
 Grouped mean absolute SHAP values, full panel (OOF):
 
@@ -82,9 +82,15 @@ Grouped mean absolute SHAP values, full panel (OOF):
 | Necessity   | unemployment rate, poverty rate                | 0.9236     | 20%   |
 | Other       | Gini, wage share                               | 1.0426     | 22%   |
 
-Opportunity features are 2.97x more important than necessity features on the SHAP
-measure. Unemployment is the single weakest predictor of all 8 (mean |SHAP| = 0.185,
-rank 8/8). Median income (1.114) and higher-ed share (1.051) dominate.
+Within the opportunity group, median income (1.114) and higher-ed share (1.051)
+together account for 2.165 of the 2.746 total opportunity SHAP (79%). Doctor
+density (0.396) and percent urban (0.186) make up the remaining 21%. The
+accurate reading is that income and human capital dominate the opportunity
+signal, not that urban amenities are doing comparable work under the same
+label. Doctor density is a quality-of-life proxy for the opportunity
+environment here, not a direct healthcare mechanism (see Limitation 8).
+Unemployment is the single weakest predictor of all 8 (mean |SHAP| = 0.185,
+rank 8/8).
 
 Per-feature breakdown, sorted by importance (OOF mean |SHAP|):
 
@@ -105,14 +111,45 @@ p = 0.044) and strongly so in the population-weighted spec (coef = -0.660,
 p = 0.001). Higher unemployment does not drive up entrepreneurship; it accompanies
 lower firm formation.
 
+Unemployment was tested four ways, not just on the main model, and fails the
+necessity signature every time (model/findings_informalisation.md):
+
+1. **Volume** (main model, full panel): SHAP rank 8/8 (mean |SHAP| = 0.185);
+   OLS coefficient negative, unweighted (-0.304, p = 0.044) and pop-weighted
+   (-0.660, p = 0.001).
+2. **Composition** (individual/micro registration share): SHAP rank 6/8; OLS
+   coefficient not significant, unweighted (+0.00294, p = 0.158) or
+   pop-weighted (+0.00009, p = 0.969). Unemployment does not predict a
+   higher individual/micro share.
+3. **Per-capita individual registrations**: SHAP rank 7/8; OLS coefficient
+   negative, unweighted (-0.185, p = 0.079) and pop-weighted (-0.454,
+   p = 0.0010).
+4. **Per-capita company (SARL/SAS) registrations**: SHAP rank 8/8; OLS
+   coefficient negative, unweighted (-11.57, p = 0.024) and pop-weighted
+   (-20.79, p = 0.0027).
+
+Across volume, composition, and both per-capita components, unemployment never
+shows the positive, significant signature the necessity model predicts.
+
 **Verdict: the necessity-entrepreneurship hypothesis is rejected for metropolitan
 France, 2012-2021.**
 
 Note on poverty rate: its positive OLS coefficient and moderate SHAP rank (3rd of
-8) do not confirm necessity push. The pattern reflects informalisation of labour:
-poorer areas have more micro-enterprise and
-auto-entrepreneur registrations for structural reasons, not because unemployment
-is pushing people into business formation.
+8) do not confirm necessity push on their own, and the informalisation-of-labour
+explanation previously asserted here has now been tested directly
+(model/findings_informalisation.md). Poverty predicts a higher individual/micro
+registration share (SHAP rank 2/8 on individual_share; OLS coef +0.00255,
+p = 0.037 unweighted, +0.00331, p = 0.0072 pop-weighted). The per-capita
+decomposition shows poverty raises individual per-capita registrations more
+strongly, and higher-ranked in SHAP (rank 3/8; coef +44.99, p = 1.5e-12
+unweighted, +63.30, p = 1.3e-15 pop-weighted), than company per-capita
+registrations (rank 5/8; coef +14.75, p = 2.3e-04 unweighted, +22.29,
+p = 2.1e-06 pop-weighted). But company (SARL/SAS) formation also rises
+significantly with poverty in both specifications, so informalisation does not
+fully account for the effect: the overall share-level test is MIXED/INCONCLUSIVE,
+because unemployment does not show the same signature (share SHAP rank 6/8, OLS
+not significant, see above). The mechanism behind poverty's positive coefficient
+remains partially unresolved.
 
 ---
 
@@ -175,6 +212,24 @@ exceeds necessity in all 10 years.
 
 ---
 
+## Robustness: additional diagnostics
+
+Two further checks were run (model/findings_diagnostics.md):
+
+- **log(population) control on doctor_density.** Adding log(pop) as a ninth
+  feature does not change doctor_density's SHAP rank: 6th of 8 without the
+  control, 6th of 9 with it (mean |SHAP| 0.396 without vs 0.324 with). Doctor
+  density's importance does not appear to be a population-size proxy in
+  disguise. LODO R2 with the added control: 0.646.
+- **Dropping 2012** (the year with a structural poverty_rate_dec gap).
+  Removing 2012 (864 rows remain) changes no coefficient sign and no SHAP
+  rank: unemployment stays 8/8 (LODO R2 without 2012: 0.688, vs 0.678 full
+  panel), poverty and unemployment OLS signs are unchanged, and the
+  opportunity/necessity SHAP shares stay materially the same (60%/20% without
+  2012 vs 58%/20% full panel; ratio 3.05x vs 2.97x).
+
+---
+
 ## What did not work
 
 **Gini coefficient**: tested as a predictor. Ranks 5th of 8 (mean |SHAP| = 0.410).
@@ -187,9 +242,14 @@ model. It remains in the feature matrix; the result is inconclusive.
 
 ## Limitations
 
-1. **Registrations, not survival.** SIDE counts legal registrations including
-   auto-entrepreneurs who may cease activity quickly. The model captures entry
-   propensity, not sustained entrepreneurial activity.
+1. **Registrations, not survival or net growth.** SIDE counts legal
+   registrations, including auto-entrepreneurs who may cease activity
+   quickly. The model captures entry propensity, not survival or net
+   business growth. High-poverty departments could partly reflect higher
+   business turnover (more entries and more exits) rather than durable
+   growth in entrepreneurial activity; this data cannot distinguish the two,
+   which is part of why the poverty mechanism (see Main finding) remains
+   unresolved.
 
 2. **Mostly a cross-sectional story.** Roughly 70% of the predictive variance is
    between departments rather than within them over time. Results describe which
@@ -223,6 +283,19 @@ model. It remains in the feature matrix; the result is inconclusive.
 8. **Doctor density as amenity proxy.** Physician density is used as a
    quality-of-life proxy for the opportunity environment. Its positive contribution
    captures broader urban amenity endowments, not a direct healthcare effect.
+
+---
+
+## Future work
+
+The poverty mechanism (informalisation vs. genuine growth vs. churn) is
+unresolved and is the natural next test, building on the per-capita
+individual/company breakdown already run in
+model/findings_informalisation.md. The birth-rate model (Appendix) is a
+complete secondary analysis that has not received the same robustness
+battery (urban/rural split, IdF-drop, temporal interaction) as the main
+firm-rate claim; extending that battery is future work, not a second main
+claim of this project.
 
 ---
 
