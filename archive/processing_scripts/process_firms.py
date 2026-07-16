@@ -35,10 +35,10 @@ TRADE        = {"G"}
 SERVICES     = {"H", "I", "J", "K", "L", "M", "N", "P", "Q", "R", "S"}
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TASK 1 — Extract and inspect
+# TASK 1, Extract and inspect
 # ─────────────────────────────────────────────────────────────────────────────
 print("=" * 65)
-print("TASK 1 — Extract and inspect")
+print("TASK 1, Extract and inspect")
 print("=" * 65)
 
 zf = zipfile.ZipFile(ZIP_PATH)
@@ -67,10 +67,10 @@ print(f"  Columns: {list(peek.columns)}")
 print(peek.to_string(index=False))
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TASK 2 — Filter to department level
+# TASK 2, Filter to department level
 # ─────────────────────────────────────────────────────────────────────────────
 print("\n" + "=" * 65)
-print("TASK 2 — Geographic level inspection & department filter")
+print("TASK 2, Geographic level inspection & department filter")
 print("=" * 65)
 
 print("\nReading data in 1 M-row chunks; keeping GEO_OBJECT='DEP' + SIDE_MEASURE='BURE'...")
@@ -126,10 +126,10 @@ print(f"Unique ACTIVITY codes: {sorted(df['ACTIVITY'].unique())}")
 print(f"Unique LEGAL_FORM codes: {sorted(df['LEGAL_FORM'].unique())}")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TASK 3 — Aggregate to panel format
+# TASK 3, Aggregate to panel format
 # ─────────────────────────────────────────────────────────────────────────────
 print("\n" + "=" * 65)
-print("TASK 3 — Aggregate to (dep × year) panel")
+print("TASK 3, Aggregate to (dep × year) panel")
 print("=" * 65)
 
 # Trim to Filosofi window
@@ -147,7 +147,7 @@ def agg(sub_df):
 total = agg(df[(df["ACTIVITY"] == "_T") & (df["LEGAL_FORM"] == "_T")])
 total = total.rename(columns={"OBS_VALUE": "total_firm_creations"})
 
-# Legal form breakdown — use ACTIVITY == "_T" (already the total across sectors)
+# Legal form breakdown, use ACTIVITY == "_T" (already the total across sectors)
 act_t = df[df["ACTIVITY"] == "_T"]
 
 lf_indiv = agg(act_t[act_t["LEGAL_FORM"] == "10"]   ).rename(columns={"OBS_VALUE": "creations_individual"})
@@ -155,7 +155,7 @@ lf_sarl  = agg(act_t[act_t["LEGAL_FORM"] == "54"]   ).rename(columns={"OBS_VALUE
 lf_sas   = agg(act_t[act_t["LEGAL_FORM"] == "57"]   ).rename(columns={"OBS_VALUE": "creations_sas"})
 lf_other = agg(act_t[act_t["LEGAL_FORM"] == "OTH_SIDE"]).rename(columns={"OBS_VALUE": "creations_other_legal"})
 
-# Sector breakdown — use LEGAL_FORM == "_T" (already the total across legal forms)
+# Sector breakdown, use LEGAL_FORM == "_T" (already the total across legal forms)
 lf_t = df[df["LEGAL_FORM"] == "_T"]
 
 sec_industry     = agg(lf_t[lf_t["ACTIVITY"].isin(INDUSTRY)]    ).rename(columns={"OBS_VALUE": "creations_sector_industry"})
@@ -179,10 +179,10 @@ print(f"\nFirst 10 rows:")
 print(panel.head(10).to_string(index=False))
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TASK 4 — Sanity checks
+# TASK 4, Sanity checks
 # ─────────────────────────────────────────────────────────────────────────────
 print("\n" + "=" * 65)
-print("TASK 4 — Sanity checks")
+print("TASK 4, Sanity checks")
 print("=" * 65)
 
 # National totals per year
@@ -210,10 +210,10 @@ print("\nNull count per column:")
 print(panel.isnull().sum().to_string())
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TASK 5 — Save and update DATA_SOURCES.md
+# TASK 5, Save and update DATA_SOURCES.md
 # ─────────────────────────────────────────────────────────────────────────────
 print("\n" + "=" * 65)
-print("TASK 5 — Save firms_panel.csv & update DATA_SOURCES.md")
+print("TASK 5, Save firms_panel.csv & update DATA_SOURCES.md")
 print("=" * 65)
 
 out_path = os.path.join(CLEAN_DIR, "firms_panel.csv")

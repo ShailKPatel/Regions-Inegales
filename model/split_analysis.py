@@ -90,7 +90,7 @@ plt.rcParams.update({
 
 # ── STEP 1: Load + build target ────────────────────────────────────────────
 r("=" * 70)
-r("STEP 1 — LOAD DATA")
+r("STEP 1, LOAD DATA")
 r("=" * 70)
 
 master = pd.read_csv(MASTER_PATH, sep=";", dtype={"dep_code": object})
@@ -114,7 +114,7 @@ r()
 
 # ── STEP 2: Define subsets ─────────────────────────────────────────────────
 r("=" * 70)
-r("STEP 2 — SUBSET DEFINITIONS")
+r("STEP 2, SUBSET DEFINITIONS")
 r("=" * 70)
 
 mask_urban = df["density_class"].isin(["urban", "intermediate"])
@@ -132,9 +132,9 @@ r(f"URBAN (urban + intermediate): {n_dep_urban} departments, {n_row_urban} rows"
 r(f"RURAL (rural):                {n_dep_rural} departments, {n_row_rural} rows")
 
 if n_dep_urban < 30:
-    r("  *** WARNING: urban subset <30 departments — treat as exploratory ***")
+    r("  *** WARNING: urban subset <30 departments, treat as exploratory ***")
 if n_dep_rural < 30:
-    r("  *** WARNING: rural subset <30 departments — treat as exploratory ***")
+    r("  *** WARNING: rural subset <30 departments, treat as exploratory ***")
 r()
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -189,7 +189,7 @@ def shap_rank(mas, feature):
 
 # ── STEP 3: Full-panel baseline ────────────────────────────────────────────
 r("=" * 70)
-r("STEP 3 — FULL-PANEL MODEL (baseline)")
+r("STEP 3, FULL-PANEL MODEL (baseline)")
 r("=" * 70)
 
 X_full = df[FEATURES].copy()
@@ -215,20 +215,20 @@ pov_pval_uw_f = _ols_f_uw.pvalues["poverty_rate_disp"]
 pov_coef_wt_f = _ols_f_wt.params["poverty_rate_disp"]
 pov_pval_wt_f = _ols_f_wt.pvalues["poverty_rate_disp"]
 
-r(f"  SHAP — Opp: {opp_f:.4f} ({opp_f/tot_f*100:.0f}%)  "
+r(f"  SHAP, Opp: {opp_f:.4f} ({opp_f/tot_f*100:.0f}%)  "
   f"Nec: {nec_f:.4f} ({nec_f/tot_f*100:.0f}%)  "
   f"Other: {oth_f:.4f} ({oth_f/tot_f*100:.0f}%)")
 r(f"  Opp/Nec ratio: {opp_f/nec_f:.2f}x")
 r(f"  Unemployment SHAP rank: {unemp_rank_f}/8")
-r(f"  OLS unemployment   — UW: coef={coef_uw_f:+.4f} p={pval_uw_f:.3e} | "
+r(f"  OLS unemployment  , UW: coef={coef_uw_f:+.4f} p={pval_uw_f:.3e} | "
   f"WT: coef={coef_wt_f:+.4f} p={pval_wt_f:.3e}")
-r(f"  OLS poverty_rate   — UW: coef={pov_coef_uw_f:+.4f} p={pov_pval_uw_f:.3e} | "
+r(f"  OLS poverty_rate  , UW: coef={pov_coef_uw_f:+.4f} p={pov_pval_uw_f:.3e} | "
   f"WT: coef={pov_coef_wt_f:+.4f} p={pov_pval_wt_f:.3e}")
 r()
 
 # ── STEP 4: Urban subset ───────────────────────────────────────────────────
 r("=" * 70)
-r("STEP 4 — URBAN SUBSET MODEL")
+r("STEP 4, URBAN SUBSET MODEL")
 r("=" * 70)
 
 X_urb = df_urban[FEATURES].copy()
@@ -255,14 +255,14 @@ pov_pval_uw_u = _ols_u_uw.pvalues["poverty_rate_disp"]
 pov_coef_wt_u = _ols_u_wt.params["poverty_rate_disp"]
 pov_pval_wt_u = _ols_u_wt.pvalues["poverty_rate_disp"]
 
-r(f"  SHAP — Opp: {opp_u:.4f} ({opp_u/tot_u*100:.0f}%)  "
+r(f"  SHAP, Opp: {opp_u:.4f} ({opp_u/tot_u*100:.0f}%)  "
   f"Nec: {nec_u:.4f} ({nec_u/tot_u*100:.0f}%)  "
   f"Other: {oth_u:.4f} ({oth_u/tot_u*100:.0f}%)")
 r(f"  Opp/Nec ratio: {opp_u/nec_u:.2f}x")
 r(f"  Unemployment SHAP rank: {unemp_rank_u}/8")
-r(f"  OLS unemployment   — UW: coef={coef_uw_u:+.4f} p={pval_uw_u:.3e} | "
+r(f"  OLS unemployment  , UW: coef={coef_uw_u:+.4f} p={pval_uw_u:.3e} | "
   f"WT: coef={coef_wt_u:+.4f} p={pval_wt_u:.3e}")
-r(f"  OLS poverty_rate   — UW: coef={pov_coef_uw_u:+.4f} p={pov_pval_uw_u:.3e} | "
+r(f"  OLS poverty_rate  , UW: coef={pov_coef_uw_u:+.4f} p={pov_pval_uw_u:.3e} | "
   f"WT: coef={pov_coef_wt_u:+.4f} p={pov_pval_wt_u:.3e}")
 verdict_urb = necessity_verdict_str(coef_uw_u, pval_uw_u, coef_wt_u, pval_wt_u, "urban")
 r(f"  Necessity verdict (urban): {verdict_urb}")
@@ -270,7 +270,7 @@ r()
 
 # ── STEP 5: Rural subset ───────────────────────────────────────────────────
 r("=" * 70)
-r("STEP 5 — RURAL SUBSET MODEL")
+r("STEP 5, RURAL SUBSET MODEL")
 r("=" * 70)
 
 X_rur = df_rural[FEATURES].copy()
@@ -306,12 +306,12 @@ for _feat in ["unemployment_rate", "poverty_rate_disp"]:
     r(f"    WT non-clustered: coef={_ols_rur_wt_nc.params[_feat]:+.4f}  p={_ols_rur_wt_nc.pvalues[_feat]:.3e}")
     r(f"    WT clustered:     coef={_ols_rur_wt_cl.params[_feat]:+.4f}  p={_ols_rur_wt_cl.pvalues[_feat]:.3e}")
 
-r(f"  SHAP — Opp: {opp_r:.4f} ({opp_r/tot_r*100:.0f}%)  "
+r(f"  SHAP, Opp: {opp_r:.4f} ({opp_r/tot_r*100:.0f}%)  "
   f"Nec: {nec_r:.4f} ({nec_r/tot_r*100:.0f}%)  "
   f"Other: {oth_r:.4f} ({oth_r/tot_r*100:.0f}%)")
 r(f"  Opp/Nec ratio: {opp_r/nec_r:.2f}x")
 r(f"  Unemployment SHAP rank: {unemp_rank_r}/8")
-r(f"  OLS unemployment — UW: coef={coef_uw_r:+.4f} p={pval_uw_r:.3f} | "
+r(f"  OLS unemployment, UW: coef={coef_uw_r:+.4f} p={pval_uw_r:.3f} | "
   f"WT: coef={coef_wt_r:+.4f} p={pval_wt_r:.3f}")
 verdict_rur = necessity_verdict_str(coef_uw_r, pval_uw_r, coef_wt_r, pval_wt_r, "rural")
 r(f"  Necessity verdict (rural): {verdict_rur}")
@@ -319,7 +319,7 @@ r()
 
 # ── STEP 6: Pooled interaction model ──────────────────────────────────────
 r("=" * 70)
-r("STEP 6 — POOLED OLS WITH RURAL INTERACTIONS (rigorous cross-check)")
+r("STEP 6, POOLED OLS WITH RURAL INTERACTIONS (rigorous cross-check)")
 r("=" * 70)
 
 df2 = df.copy()
@@ -349,12 +349,12 @@ wt_unemp_r_c,  wt_unemp_r_p,  wt_unemp_r_s  = row("unemp_x_rural",      ols_int_
 wt_edu_r_c,    wt_edu_r_p,    wt_edu_r_s    = row("edu_x_rural",         ols_int_wt)
 
 r(f"Pooled OLS with interactions ({len(df)} rows, full panel):")
-r(f"  Unweighted — unemployment_rate:     coef={uw_unemp_c:+.4f}  p={uw_unemp_p:.3f} {uw_unemp_s}")
-r(f"  Unweighted — unemp_x_rural:         coef={uw_unemp_r_c:+.4f}  p={uw_unemp_r_p:.3f} {uw_unemp_r_s}")
-r(f"  Unweighted — edu_x_rural:           coef={uw_edu_r_c:+.4f}  p={uw_edu_r_p:.3f} {uw_edu_r_s}")
-r(f"  Pop-weighted — unemployment_rate:   coef={wt_unemp_c:+.4f}  p={wt_unemp_p:.3f} {wt_unemp_s}")
-r(f"  Pop-weighted — unemp_x_rural:       coef={wt_unemp_r_c:+.4f}  p={wt_unemp_r_p:.3f} {wt_unemp_r_s}")
-r(f"  Pop-weighted — edu_x_rural:         coef={wt_edu_r_c:+.4f}  p={wt_edu_r_p:.3f} {wt_edu_r_s}")
+r(f"  Unweighted, unemployment_rate:     coef={uw_unemp_c:+.4f}  p={uw_unemp_p:.3f} {uw_unemp_s}")
+r(f"  Unweighted, unemp_x_rural:         coef={uw_unemp_r_c:+.4f}  p={uw_unemp_r_p:.3f} {uw_unemp_r_s}")
+r(f"  Unweighted, edu_x_rural:           coef={uw_edu_r_c:+.4f}  p={uw_edu_r_p:.3f} {uw_edu_r_s}")
+r(f"  Pop-weighted, unemployment_rate:   coef={wt_unemp_c:+.4f}  p={wt_unemp_p:.3f} {wt_unemp_s}")
+r(f"  Pop-weighted, unemp_x_rural:       coef={wt_unemp_r_c:+.4f}  p={wt_unemp_r_p:.3f} {wt_unemp_r_s}")
+r(f"  Pop-weighted, edu_x_rural:         coef={wt_edu_r_c:+.4f}  p={wt_edu_r_p:.3f} {wt_edu_r_s}")
 
 unemp_interaction_sig = (uw_unemp_r_p < 0.05 or wt_unemp_r_p < 0.05)
 edu_interaction_sig   = (uw_edu_r_p   < 0.05 or wt_edu_r_p   < 0.05)
@@ -365,10 +365,10 @@ r()
 
 # ── STEP 7: Headline figure ────────────────────────────────────────────────
 r("=" * 70)
-r("STEP 7 — FIGURES")
+r("STEP 7, FIGURES")
 r("=" * 70)
 
-# Figure A: Grouped bar — Full vs Urban vs Rural
+# Figure A: Grouped bar, Full vs Urban vs Rural
 contexts = ["Full", "Urban", "Rural"]
 opp_vals = [opp_f/tot_f*100, opp_u/tot_u*100, opp_r/tot_r*100]
 nec_vals = [nec_f/tot_f*100, nec_u/tot_u*100, nec_r/tot_r*100]
@@ -433,7 +433,7 @@ for ax, (title, mas, opp, nec, oth, tot) in zip(axes, datasets):
     )
     ax.set_xlabel("Mean |SHAP|", fontsize=8)
 
-figB.suptitle("Feature SHAP Importance — Full vs Urban vs Rural",
+figB.suptitle("Feature SHAP Importance, Full vs Urban vs Rural",
               fontsize=11, fontweight="bold")
 figB.tight_layout()
 figB.savefig(f"{FIG_DIR}/split_shap_per_feature.png", dpi=150, bbox_inches="tight")
@@ -460,7 +460,7 @@ r()
 
 # ── STEP 8: Write split_findings.md ───────────────────────────────────────
 r("=" * 70)
-r("STEP 8 — split_findings.md")
+r("STEP 8, split_findings.md")
 r("=" * 70)
 
 def sig_star(p):
@@ -503,7 +503,7 @@ def int_sig_summary():
         )
     return " ".join(lines)
 
-findings_md = f"""# split_findings.md — Urban/Rural Split Analysis
+findings_md = f"""# split_findings.md, Urban/Rural Split Analysis
 _Generated by model/split_analysis.py_
 
 ---
@@ -525,13 +525,13 @@ rural France.
 | Urban | urban + intermediate | {n_dep_urban} | {n_row_urban} |
 | Rural | rural only | {n_dep_rural} | {n_row_rural} |
 
-Both subsets exceed 30 departments — results are not purely exploratory,
+Both subsets exceed 30 departments, results are not purely exploratory,
 but the rural subset (~51 depts, ~510 obs) is modest. Frame as
 **suggestive, not definitive** for subset-level claims.
 
 ---
 
-## Headline: SHAP Group Importance — Full vs Urban vs Rural
+## Headline: SHAP Group Importance, Full vs Urban vs Rural
 
 | | Full panel | Urban/Interm | Rural |
 |---|---|---|---|
@@ -569,7 +569,7 @@ Necessity's share rises modestly in rural areas ({nec_r/tot_r*100:.0f}% vs
 
 ---
 
-## Interaction Model — Rigorous Cross-Check
+## Interaction Model, Rigorous Cross-Check
 
 Pooled OLS on {len(df)} rows with added terms:
 `unemp_x_rural = unemployment_rate × is_rural`
@@ -592,7 +592,7 @@ This uses all available data and is the statistically stronger test.
 Rural subset: {n_dep_rural} departments × 10 years = {n_row_rural} observations.
 Urban subset: {n_dep_urban} departments × 10 years = {n_row_urban} observations.
 Both exceed the <30 flag threshold. However, LODO within the rural subset
-means some folds train on ~50 departments — models remain usable but
+means some folds train on ~50 departments, models remain usable but
 precision is lower than the full-panel result. Report rural findings
 as **suggestive evidence** rather than definitive conclusions.
 
@@ -602,7 +602,7 @@ as **suggestive evidence** rather than definitive conclusions.
 
 | File | Content |
 |---|---|
-| `figures/split_shap_by_context.png` | Headline grouped bar — Full vs Urban vs Rural |
+| `figures/split_shap_by_context.png` | Headline grouped bar, Full vs Urban vs Rural |
 | `figures/split_shap_per_feature.png` | Per-feature SHAP, three panels side by side |
 | `figures/split_opp_nec_ratio.png` | Opportunity/Necessity ratio by context |
 

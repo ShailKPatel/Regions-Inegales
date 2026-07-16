@@ -100,7 +100,7 @@ st.markdown(
       <td>Leave-One-Year-Out (LOYO)</td>
       <td>0.929</td>
       <td>0.7564</td>
-      <td>Generalisation to unseen years; inflated by cross-sectional overlap with training departments — not a test of generalisation to new units</td>
+      <td>Generalisation to unseen years; inflated by cross-sectional overlap with training departments, not a test of generalisation to new units</td>
     </tr>
     <tr>
       <td>Random 10-fold (KFold)</td>
@@ -235,7 +235,7 @@ st.divider()
 st.markdown('<h3 class="ri-section-h">Appendix: birth rate determinants (secondary analysis)</h3>', unsafe_allow_html=True)
 st.markdown(
     '<p class="ri-caption">'
-    "Not a co-finding — a methodological extension applying the same LODO + OOF SHAP framework "
+    "Not a co-finding, a methodological extension applying the same LODO + OOF SHAP framework "
     "to a different target: birth rate (live births per 1,000 inhab.) · "
     "2012–2021 · 960 dept-years · uses marriage rate, deaths, and births from three new sources"
     "</p>",
@@ -323,7 +323,7 @@ st.markdown(
 
 st.markdown(
     '<p class="ri-caption" style="margin-top:0.5rem">'
-    "★ LODO R² = 0.715 — stronger generalisation than the firm-rate model (0.678)."
+    "★ LODO R² = 0.715, stronger generalisation than the firm-rate model (0.678)."
     "</p>",
     unsafe_allow_html=True,
 )
@@ -333,10 +333,10 @@ st.markdown(
 **Group shares (OOF SHAP):** Structural 59% · Economic 30% · Social 10%.
 
 **Key OLS findings** (department-clustered SE):
-- Marriage rate: +0.43 per 1,000 — p = 0.001 (robust, both weighting specs)
-- Median income: −0.0006 — p < 0.001 (demographic transition: richer departments have fewer births)
-- % Urban: +0.08 — p < 0.001 (urban departments have higher birth rates, driven by younger age structure)
-- Unemployment rate: −0.05 — p = 0.63 (not significant — parallel to the firm-rate model)
+- Marriage rate: +0.43 per 1,000, p = 0.001 (robust, both weighting specs)
+- Median income: −0.0006, p < 0.001 (demographic transition: richer departments have fewer births)
+- % Urban: +0.08, p < 0.001 (urban departments have higher birth rates, driven by younger age structure)
+- Unemployment rate: −0.05, p = 0.63 (not significant, parallel to the firm-rate model)
 
 **Structural note:** % Urban alone accounts for 44% of total OOF SHAP in this model, reflecting persistent demographic concentration in metropolitan France. Marriage rate is the most interpretable individual predictor (OLS p = 0.001).
 """

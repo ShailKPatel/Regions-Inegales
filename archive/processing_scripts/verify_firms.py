@@ -26,10 +26,10 @@ task1_ok = False
 task2_ok = False
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TASK 1 — Spot check 8 random cells against raw data
+# TASK 1, Spot check 8 random cells against raw data
 # ─────────────────────────────────────────────────────────────────────────────
 print("=" * 65)
-print("TASK 1 — Spot check 8 random cells vs raw data")
+print("TASK 1, Spot check 8 random cells vs raw data")
 print("=" * 65)
 
 # Load panel
@@ -115,17 +115,17 @@ for dep, yr in sampled:
 
 print()
 if all_match:
-    print("VERDICT: VERIFIED ✓  — all 8 cells match raw recomputed values")
+    print("VERDICT: VERIFIED ✓ , all 8 cells match raw recomputed values")
     task1_ok = True
 else:
-    print("VERDICT: MISMATCH DETECTED — review details above")
+    print("VERDICT: MISMATCH DETECTED, review details above")
     print("Stopping before cleanup. Fix the panel and re-run.")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TASK 2 — Test join with Filosofi
+# TASK 2, Test join with Filosofi
 # ─────────────────────────────────────────────────────────────────────────────
 print("\n" + "=" * 65)
-print("TASK 2 — Join test with Filosofi panel")
+print("TASK 2, Join test with Filosofi panel")
 print("=" * 65)
 
 # Load Filosofi
@@ -135,8 +135,8 @@ print(f"\nFilosofi panel shape: {filo.shape}")
 
 # Dtype check before merge
 print("\nKey column dtypes:")
-print(f"  Filosofi   — dep_code: {filo['dep_code'].dtype}  year: {filo['year'].dtype}")
-print(f"  Firms      — dep_code: {firms['dep_code'].dtype}  year: {firms['year'].dtype}")
+print(f"  Filosofi  , dep_code: {filo['dep_code'].dtype}  year: {filo['year'].dtype}")
+print(f"  Firms     , dep_code: {firms['dep_code'].dtype}  year: {firms['year'].dtype}")
 print(f"  Filosofi   dep_code sample: {filo['dep_code'].head(3).tolist()}")
 print(f"  Firms      dep_code sample: {firms['dep_code'].head(3).tolist()}")
 print(f"  Filosofi   year sample:     {filo['year'].head(3).tolist()}")
@@ -146,7 +146,7 @@ dtype_ok = (
     str(filo["dep_code"].dtype) == str(firms["dep_code"].dtype) and
     str(filo["year"].dtype)     == str(firms["year"].dtype)
 )
-print(f"\nDtypes compatible: {'YES ✓' if dtype_ok else 'NO ✗ — fix before merging'}")
+print(f"\nDtypes compatible: {'YES ✓' if dtype_ok else 'NO ✗, fix before merging'}")
 
 # Inner merge
 inner = pd.merge(filo, firms, on=["dep_code", "year"], how="inner")
@@ -176,7 +176,7 @@ print(f"Outer merge shape: {outer.shape}  (expect (960, ...))")
 outer_ok = outer.shape[0] == 960
 
 if outer_ok and inner_ok:
-    print("\nJOIN VERDICT: PERFECT ALIGNMENT ✓  — inner=960, outer=960")
+    print("\nJOIN VERDICT: PERFECT ALIGNMENT ✓ , inner=960, outer=960")
     task2_ok = True
 else:
     print("\nJOIN VERDICT: ALIGNMENT ISSUE ✗")
@@ -186,10 +186,10 @@ else:
         print(f"  Outer join has {outer.shape[0]} rows (expected 960)")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TASK 3 — Cleanup commands (list only)
+# TASK 3, Cleanup commands (list only)
 # ─────────────────────────────────────────────────────────────────────────────
 print("\n" + "=" * 65)
-print("TASK 3 — Cleanup commands")
+print("TASK 3, Cleanup commands")
 print("=" * 65)
 
 zip_size_mb = os.path.getsize(ZIP_PATH) / 1e6
@@ -221,7 +221,7 @@ else:
         issues.append("Task 1 (spot check) found a mismatch in the firms panel")
     if not task2_ok:
         issues.append("Task 2 (join test) found misaligned keys between the two panels")
-    print("\nDO NOT CLEAN UP — issues found:")
+    print("\nDO NOT CLEAN UP, issues found:")
     for issue in issues:
         print(f"  ✗ {issue}")
     print("\nResolve the issues above, then re-run this script.")

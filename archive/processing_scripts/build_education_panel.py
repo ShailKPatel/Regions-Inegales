@@ -1,5 +1,5 @@
 """
-Dataset 5 — Education: interpolate 3 census snapshots to annual panel 2012–2021.
+Dataset 5, Education: interpolate 3 census snapshots to annual panel 2012–2021.
 Source: sources/education_snapshots_insee.csv (288 rows, years 2011/2016/2022).
 Output: sources/education_panel_insee.csv (960 rows, years 2012–2021).
 """
@@ -16,7 +16,7 @@ PANEL_YEARS = list(range(2012, 2022))   # 2012–2021 inclusive
 SNAP_YEARS  = [2011, 2016, 2022]
 SPOT_DEPS   = ["75", "15", "31"]        # Paris, Cantal, Haute-Garonne
 
-# ── TASK 1 — load snapshots ───────────────────────────────────────────────────
+# ── TASK 1, load snapshots ───────────────────────────────────────────────────
 
 snaps = pd.read_csv(SRC, sep=";", dtype={"dep_code": str})
 print(f"Snapshots loaded: {snaps.shape}  years={sorted(snaps.year.unique())}")
@@ -26,7 +26,7 @@ wide = snaps.pivot(index="dep_code", columns="year", values="edu_share_sup")
 assert wide.shape == (96, 3), f"Expected (96,3), got {wide.shape}"
 assert list(wide.columns) == SNAP_YEARS, f"Expected years {SNAP_YEARS}"
 
-# ── TASK 1 — linear interpolation ────────────────────────────────────────────
+# ── TASK 1, linear interpolation ────────────────────────────────────────────
 
 records = []
 for dep, row in wide.iterrows():
@@ -50,7 +50,7 @@ panel["dep_code"] = panel["dep_code"].astype(str)
 panel["year"]     = panel["year"].astype(int)
 panel = panel.sort_values(["dep_code", "year"]).reset_index(drop=True)
 
-# ── TASK 2 — checks ───────────────────────────────────────────────────────────
+# ── TASK 2, checks ───────────────────────────────────────────────────────────
 
 print(f"\n── Shape checks ──")
 print(f"  Rows        : {len(panel)} (expected 960)")
@@ -65,7 +65,7 @@ print(f"  Rows/year   : {per_yr.to_dict()} (each expected 96)")
 # edu_is_interpolated flag check
 n_obs  = (panel["edu_is_interpolated"] == False).sum()
 n_intp = (panel["edu_is_interpolated"] == True).sum()
-print(f"\n  edu_is_interpolated=False: {n_obs}  (expected 96 — year 2016 only)")
+print(f"\n  edu_is_interpolated=False: {n_obs}  (expected 96, year 2016 only)")
 print(f"  edu_is_interpolated=True : {n_intp}  (expected 864)")
 
 # Bounds [10,70]%
@@ -73,7 +73,7 @@ out_of_bounds = panel[(panel["edu_share_sup"] < 10) | (panel["edu_share_sup"] > 
 if len(out_of_bounds):
     print(f"\n  OUT-OF-BOUNDS rows:\n{out_of_bounds.to_string()}")
 else:
-    print(f"  All shares in [10, 70]% — OK")
+    print(f"  All shares in [10, 70]%, OK")
 
 # Bracket monotone check
 print(f"\n── Bracket (monotone-safe) check ──")
@@ -101,7 +101,7 @@ if outside:
     for dep, yr, val, lo, hi in outside:
         print(f"    dep={dep} yr={yr} val={val}  bracket=[{lo},{hi}]")
 else:
-    print(f"  All interpolated values within brackets — OK")
+    print(f"  All interpolated values within brackets, OK")
 
 # ── Spot: sanity print for 3 departments ─────────────────────────────────────
 
@@ -112,7 +112,7 @@ for dep in SPOT_DEPS:
     print(f"\n  dep={dep}  anchors: 2011={snap_row[2011]}%  2016={snap_row[2016]}%  2022={snap_row[2022]}%")
     print(sub.to_string(index=False))
 
-# ── TASK 2 — write output ─────────────────────────────────────────────────────
+# ── TASK 2, write output ─────────────────────────────────────────────────────
 
 panel.to_csv(
     OUT,
@@ -127,12 +127,12 @@ print(f"  Re-read shape: {check.shape}")
 print(f"  Cols: {check.columns.tolist()}")
 print(f"  Head:\n{check.head(6).to_string(index=False)}")
 
-# ── TASK 3 — append DATA_SOURCES.md ──────────────────────────────────────────
+# ── TASK 3, append DATA_SOURCES.md ──────────────────────────────────────────
 
 entry = """
 ---
 
-## 7. Education by Department — Annual Panel 2012–2021 (Interpolated)
+## 7. Education by Department, Annual Panel 2012–2021 (Interpolated)
 
 - **Source**: Derived from `sources/education_snapshots_insee.csv` (section 6 above)
 - **Method**: Linear interpolation across three census anchor years (2011, 2016, 2022) using `numpy.interp`
@@ -140,8 +140,8 @@ entry = """
   - 2016: observed value carried through unchanged
   - 2017–2021: straight-line between 2016 and 2022 observed values
 - **Coverage**: 96 metropolitan departments × 10 years = 960 rows
-- **Variable**: `edu_share_sup` — higher-ed share (Bac+2 and above, %), rounded to 2 dp; definition consistent across all three anchor vintages
-- **Flag**: `edu_is_interpolated` — `False` only for year 2016 (observed within the panel window); `True` for all other years (2012–2015, 2017–2021)
+- **Variable**: `edu_share_sup`, higher-ed share (Bac+2 and above, %), rounded to 2 dp; definition consistent across all three anchor vintages
+- **Flag**: `edu_is_interpolated`, `False` only for year 2016 (observed within the panel window); `True` for all other years (2012–2015, 2017–2021)
 - **Output file**: `sources/education_panel_insee.csv` (960 rows × 4 cols: dep_code, year, edu_share_sup, edu_is_interpolated; `;`-delimited)
 - **Note**: Only 2016 is a real within-panel observation; 2012–2015 and 2017–2021 are interpolated estimates. Do not over-interpret year-to-year variation.
 """
@@ -149,4 +149,4 @@ entry = """
 with open(DATA_SOURCES, "a", encoding="utf-8") as fh:
     fh.write(entry)
 print(f"\n  Appended entry to {DATA_SOURCES}")
-print("\nDone. STOP — merge is the next step.")
+print("\nDone. STOP, merge is the next step.")

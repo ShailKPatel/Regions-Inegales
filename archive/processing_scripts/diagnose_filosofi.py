@@ -18,10 +18,10 @@ YEARS = sorted(master["YEAR"].astype(int).unique())
 
 
 # ---------------------------------------------------------------------------
-# TASK 1 — Confirm or deny year-siloing
+# TASK 1, Confirm or deny year-siloing
 # ---------------------------------------------------------------------------
 print("=" * 72)
-print("TASK 1 — IS THE DATA YEAR-SILOED?")
+print("TASK 1, IS THE DATA YEAR-SILOED?")
 print("=" * 72)
 
 def find_col(pattern: str) -> str | None:
@@ -52,17 +52,17 @@ for pattern, year, label in test_specs:
 
 print()
 if verdict_year_siloed:
-    print("  VERDICT: CONFIRMED — data is year-siloed.")
+    print("  VERDICT: CONFIRMED, data is year-siloed.")
     print("  Each column is only filled for rows matching its own year.")
 else:
-    print("  VERDICT: NOT the case — data appears to be stacked correctly.")
+    print("  VERDICT: NOT the case, data appears to be stacked correctly.")
 
 
 # ---------------------------------------------------------------------------
-# TASK 2 — Full column coverage map
+# TASK 2, Full column coverage map
 # ---------------------------------------------------------------------------
 print("\n\n" + "=" * 72)
-print("TASK 2 — COLUMN COVERAGE MAP")
+print("TASK 2, COLUMN COVERAGE MAP")
 print("=" * 72)
 print("  Computing per-column non-null counts and year presence…")
 
@@ -99,10 +99,10 @@ print(f"  Columns entirely empty (0 non-null):                 {n_zero}")
 
 
 # ---------------------------------------------------------------------------
-# TASK 3 — Base-name grouping
+# TASK 3, Base-name grouping
 # ---------------------------------------------------------------------------
 print("\n\n" + "=" * 72)
-print("TASK 3 — BASE-NAME GROUPING (year-suffix stripped)")
+print("TASK 3, BASE-NAME GROUPING (year-suffix stripped)")
 print("=" * 72)
 
 # Strip 2-digit year suffix from column names
@@ -136,7 +136,7 @@ KEY_PATTERNS = {
     "N households (NBMEN)":  r"^NBMEN\{YY\}",
 }
 
-print("\n  KEY ECONOMIC CONCEPTS — year-group summary:\n")
+print("\n  KEY ECONOMIC CONCEPTS, year-group summary:\n")
 print(f"  {'Base name':<35s} {'Years':<6} {'Coverage':<25} {'Example value'}")
 print("  " + "-" * 80)
 
@@ -174,10 +174,10 @@ print(f"  Base names with partial coverage:      {partial_bases}")
 
 
 # ---------------------------------------------------------------------------
-# TASK 4 — Proposed reshape plan
+# TASK 4, Proposed reshape plan
 # ---------------------------------------------------------------------------
 print("\n\n" + "=" * 72)
-print("TASK 4 — PROPOSED RESHAPE PLAN")
+print("TASK 4, PROPOSED RESHAPE PLAN")
 print("=" * 72)
 
 print("""
@@ -203,7 +203,7 @@ Result: 960 rows × ~50–80 columns, one value per cell, no year-siloing.
 """)
 
 # Build and print the rename mapping plan
-# Key variables we identified — extract their base names and example columns
+# Key variables we identified, extract their base names and example columns
 print("  COLUMN RENAME MAPPING (year suffix {YY} → canonical name):\n")
 print(f"  {'Pattern / base name':<35s} → {'Canonical name':<35s} {'Years present'}")
 print("  " + "-" * 90)
@@ -226,7 +226,7 @@ RENAME_MAP = [
     (r"^GI\{YY\}_DEC$",     "gini_dec",          "Gini coefficient (declared)"),
     (r"^RD_DEC$",           "d9_d1_dec",         "D9/D1 ratio declared income"),
     (r"^S80S2\{YY\}_DEC$",  "s80s20_dec",        "S80/S20 ratio (declared)"),
-    # Disposable income (DISP concept) — USE THESE for inequality analysis
+    # Disposable income (DISP concept), USE THESE for inequality analysis
     (r"^Q1\{YY\}_DISP$",    "q1_disp",           "1st quartile disposable income"),
     (r"^Q2\{YY\}_DISP$",    "q2_disp",           "Median (Q2) disposable income ★"),
     (r"^Q3\{YY\}_DISP$",    "q3_disp",           "3rd quartile disposable income"),
@@ -236,7 +236,7 @@ RENAME_MAP = [
     (r"^RD_DISP$",          "d9_d1_disp",        "D9/D1 ratio disposable income"),
     (r"^S80S2\{YY\}_DISP$", "s80s20_disp",       "S80/S20 ratio (disposable)"),
     # Poverty (Pauvres files)
-    (r"^TP60\{YY\}$",       "poverty_rate",      "Poverty rate 60% — 2012 only (no suffix)"),
+    (r"^TP60\{YY\}$",       "poverty_rate",      "Poverty rate 60%, 2012 only (no suffix)"),
     (r"^TP60\{YY\}_PAU_DEC$",  "poverty_rate_dec",  "Poverty rate 60% (declared)"),
     (r"^TP60\{YY\}_PAU_DISP$", "poverty_rate_disp", "Poverty rate 60% (disposable) ★"),
     # Income composition shares (DEC only)
@@ -268,9 +268,9 @@ print("""
 ─────────────────────────────────────────────────────────────────────────────
 NOTES:
   ★ = recommended primary variable for inequality/poverty analysis
-  RD and S80S20 columns: the base name does NOT contain {YY} — check manually
+  RD and S80S20 columns: the base name does NOT contain {YY}, check manually
   Columns NOT in the mapping above: household-type breakdowns (AGE1-6, TYM1-6,
-    OPR1-6, etc.) — ~100 base names. Suggest keeping only "ENSEMBLE" columns
+    OPR1-6, etc.), ~100 base names. Suggest keeping only "ENSEMBLE" columns
     (no household-type prefix) in the reshaped file, and storing the breakdown
     columns separately if needed.
 ─────────────────────────────────────────────────────────────────────────────

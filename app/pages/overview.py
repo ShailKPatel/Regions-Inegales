@@ -136,7 +136,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('<h3 class="ri-section-h">Robustness</h3>', unsafe_allow_html=True)
 st.markdown(
     """
-- **Urban vs rural:** opportunity dominates in both density subsets. Rural departments show a 4.19× Opp/Nec ratio — higher than urban (1.95×), the opposite of what a necessity account predicts.
+- **Urban vs rural:** opportunity dominates in both density subsets. Rural departments show a 4.19× Opp/Nec ratio, higher than urban (1.95×), the opposite of what a necessity account predicts.
 - **Over time:** unemployment's relationship with firm creation weakens across 2012–2021. Opportunity features (income, education) strengthen. The finding is not a period artefact.
 - **OLS confirmation:** unemployment rate runs **negative** in both unweighted (coef = −0.30, p = 0.044) and population-weighted (coef = −0.66, p = 0.001) OLS specs. Higher unemployment accompanies fewer firms, not more.
 """

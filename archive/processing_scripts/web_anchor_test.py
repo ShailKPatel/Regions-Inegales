@@ -1,5 +1,5 @@
 """
-Master large web-anchor test — Régions Inégales
+Master large web-anchor test, Régions Inégales
 Read-only. Touch nothing.
 """
 
@@ -29,10 +29,10 @@ passes_c       = 0
 total_cells    = 0
 
 # ═══════════════════════════════════════════════════════════════════
-# TEST A — Full column-year sweep: q2_disp, year=2019, all 96 depts
+# TEST A, Full column-year sweep: q2_disp, year=2019, all 96 depts
 # ═══════════════════════════════════════════════════════════════════
 print("=" * 65)
-print("TEST A — q2_disp, year=2019, all 96 departments (tolerance 0)")
+print("TEST A, q2_disp, year=2019, all 96 departments (tolerance 0)")
 print("=" * 65)
 
 expected_a = {
@@ -74,7 +74,7 @@ for dep, exp in sorted(expected_a.items()):
 
 # Report
 if not failures_a and failure_69 is None:
-    print(f"  PASS — all 96 cells match")
+    print(f"  PASS, all 96 cells match")
 else:
     if failures_a:
         print(f"  HARD FAILURES (non-69):")
@@ -95,11 +95,11 @@ a_pass_count = 96 - a_hard_fails - (1 if failure_69 is not None else 0)
 print(f"  Hard fails (non-69): {a_hard_fails} | 69-special: {'1 mismatch' if failure_69 else 'match'} | Pass: {a_pass_count + (1 if failure_69 is None else 0)}/96")
 
 # ═══════════════════════════════════════════════════════════════════
-# TEST B — Cross-year/cross-variable cells (tolerance 0)
+# TEST B, Cross-year/cross-variable cells (tolerance 0)
 # ═══════════════════════════════════════════════════════════════════
 print()
 print("=" * 65)
-print("TEST B — Cross-year/cross-variable cells (tolerance 0)")
+print("TEST B, Cross-year/cross-variable cells (tolerance 0)")
 print("=" * 65)
 
 cells_b = [
@@ -128,7 +128,7 @@ for col, dep, yr, exp in cells_b:
         passes_b += 1
 
 if not failures_b:
-    print(f"  PASS — all 13 cells match")
+    print(f"  PASS, all 13 cells match")
 else:
     print(f"  FAILURES:")
     for f in failures_b:
@@ -136,11 +136,11 @@ else:
 print(f"  Pass: {passes_b}/13  |  Fail: {len(failures_b)}/13")
 
 # ═══════════════════════════════════════════════════════════════════
-# TEST C — Rounded anchor (tolerance ±0.5)
+# TEST C, Rounded anchor (tolerance ±0.5)
 # ═══════════════════════════════════════════════════════════════════
 print()
 print("=" * 65)
-print("TEST C — Rounded anchor: poverty_rate_disp ('93',2019) ≈ 28 (±0.5)")
+print("TEST C, Rounded anchor: poverty_rate_disp ('93',2019) ≈ 28 (±0.5)")
 print("=" * 65)
 
 total_cells += 1
@@ -148,17 +148,17 @@ val_c = get("93", 2019, "poverty_rate_disp")
 ok_c = abs(val_c - 28) <= 0.5
 if ok_c:
     passes_c += 1
-    print(f"  PASS — got {val_c:.4f}  |  |{val_c:.4f} − 28| = {abs(val_c-28):.4f} ≤ 0.5")
+    print(f"  PASS, got {val_c:.4f}  |  |{val_c:.4f} − 28| = {abs(val_c-28):.4f} ≤ 0.5")
 else:
     failures_c.append({"col": "poverty_rate_disp", "dep": "93", "year": 2019, "anchor": 28, "got": val_c})
-    print(f"  FAIL — got {val_c:.4f}  |  |{val_c:.4f} − 28| = {abs(val_c-28):.4f} > 0.5")
+    print(f"  FAIL, got {val_c:.4f}  |  |{val_c:.4f} − 28| = {abs(val_c-28):.4f} > 0.5")
 
 # ═══════════════════════════════════════════════════════════════════
-# TEST D — Firms aggregate: AURA 2019
+# TEST D, Firms aggregate: AURA 2019
 # ═══════════════════════════════════════════════════════════════════
 print()
 print("=" * 65)
-print("TEST D — Firms aggregate: AURA deps, year=2019 (soft band 100k–115k)")
+print("TEST D, Firms aggregate: AURA deps, year=2019 (soft band 100k–115k)")
 print("=" * 65)
 
 aura_deps = {"01","03","07","15","26","38","42","43","63","69","73","74"}
@@ -172,7 +172,7 @@ print(f"  Exact sum: {aura_sum:,.0f}")
 exceeds_threshold = aura_sum > 100_000
 within_band = 100_000 <= aura_sum <= 115_000
 print(f"  Exceeds 100,000 threshold  : {'YES ✓' if exceeds_threshold else 'NO ✗'}")
-print(f"  Within soft band 100k–115k : {'YES' if within_band else 'FLAG — outside soft band'}")
+print(f"  Within soft band 100k–115k : {'YES' if within_band else 'FLAG, outside soft band'}")
 print(f"  Per-dept breakdown:")
 for _, row in aura_2019.sort_values("dep_code").iterrows():
     print(f"    dep={row['dep_code']}  total_firm_creations={row['total_firm_creations']:>8,.0f}")
@@ -180,11 +180,11 @@ for _, row in aura_2019.sort_values("dep_code").iterrows():
 d_pass = exceeds_threshold
 
 # ═══════════════════════════════════════════════════════════════════
-# TEST E — Coherence: full rows for ("66",2021) and ("93",2019)
+# TEST E, Coherence: full rows for ("66",2021) and ("93",2019)
 # ═══════════════════════════════════════════════════════════════════
 print()
 print("=" * 65)
-print("TEST E — Coherence: full rows for ('66',2021) and ('93',2019)")
+print("TEST E, Coherence: full rows for ('66',2021) and ('93',2019)")
 print("=" * 65)
 
 for dep, yr in [("66", 2021), ("93", 2019)]:
@@ -218,13 +218,13 @@ d_note = f"sum={aura_sum:,.0f} {'✓ >100k' if exceeds_threshold else '✗ ≤10
 
 total_hard_fail = a_hard_fail_count + b_fail + c_fail + (0 if exceeds_threshold else 1)
 # Total cells: 96 (A) + 13 (B) + 1 (C) + 1 (D) = 111... but spec says 110
-# The spec says "110 cells under test" — 96+13+1 = 110; D is the aggregate (1 extra we count separately)
+# The spec says "110 cells under test", 96+13+1 = 110; D is the aggregate (1 extra we count separately)
 
 print(f"  TEST A  q2_disp 2019 96 deps   : {'PASS' if a_hard_fail_count == 0 else 'FAIL'}  ({a_pass_final}/96 match; 69={a_69_note})")
 print(f"  TEST B  cross-year/var 13 cells: {'PASS' if b_fail == 0 else 'FAIL'}  ({b_pass}/13)")
 print(f"  TEST C  rounded anchor 1 cell  : {'PASS' if c_fail == 0 else 'FAIL'}  (got {val_c})")
 print(f"  TEST D  AURA firm agg          : {'PASS' if d_pass else 'FAIL'}  {d_note}")
-print(f"  TEST E  coherence profiles     : report only — see rows above")
+print(f"  TEST E  coherence profiles     : report only, see rows above")
 print()
 print(f"  Total hard-fail cells (A non-69 + B + C): {a_hard_fail_count + b_fail + c_fail} / 110")
 print(f"  Total cells under test (spec): 110")
@@ -234,7 +234,7 @@ if a_hard_fail_count + b_fail + c_fail == 0 and d_pass:
 elif a_hard_fail_count + b_fail + c_fail == 0:
     print("\n  *** CELL TESTS PASS; D FLAG (see above) ***")
 else:
-    print("\n  *** FAILURES DETECTED — see listings above ***")
+    print("\n  *** FAILURES DETECTED, see listings above ***")
     all_fails = (
         [{"test": "A", **f} for f in failures_a] +
         [{"test": "B", **f} for f in failures_b] +

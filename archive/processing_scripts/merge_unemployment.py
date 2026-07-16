@@ -26,16 +26,16 @@ def gate(condition, msg):
     if not condition:
         abort(msg)
 
-# ── STEP 0 — Backup ──────────────────────────────────────────────────────────
+# ── STEP 0, Backup ──────────────────────────────────────────────────────────
 
 print("=" * 60)
-print("STEP 0 — Backup")
+print("STEP 0, Backup")
 shutil.copy2(MASTER_PATH, BACKUP_PATH)
 print(f"  Backup written → {BACKUP_PATH}")
 
-# ── STEP 1 — Sign-balance check ───────────────────────────────────────────────
+# ── STEP 1, Sign-balance check ───────────────────────────────────────────────
 
-print("\nSTEP 1 — Sign-balance check (BDM crosscheck)")
+print("\nSTEP 1, Sign-balance check (BDM crosscheck)")
 xc = pd.read_csv(XCHECK_PATH, sep=SEP, dtype={"dep_code": str})
 
 within = xc[xc["status"] == "WITHIN_0.1"].copy()
@@ -49,9 +49,9 @@ print(f"  +0.1 (panel > BDM)     : {n_pos}")
 print(f"  −0.1 (panel < BDM)     : {n_neg}")
 print(f"  Total                  : {n_pos + n_neg}  (report only; no action taken)")
 
-# ── STEP 2 — Merge ────────────────────────────────────────────────────────────
+# ── STEP 2, Merge ────────────────────────────────────────────────────────────
 
-print("\nSTEP 2 — Merge")
+print("\nSTEP 2, Merge")
 
 master = pd.read_csv(MASTER_PATH, sep=SEP, dtype={"dep_code": str})
 unemp  = pd.read_csv(UNEMP_PATH,  sep=SEP, dtype={"dep_code": str})
@@ -80,7 +80,7 @@ result = pd.merge(master, unemp_merge, on=["dep_code", "year"], how="outer")
 
 # Hard gates
 gate(len(result) == 960,
-     f"result has {len(result)} rows (expected 960) — ghost rows detected")
+     f"result has {len(result)} rows (expected 960), ghost rows detected")
 gate(result.shape[1] == 39,
      f"result has {result.shape[1]} columns (expected 39)")
 gate(result["unemployment_rate"].isna().sum() == 0,
@@ -99,9 +99,9 @@ gate(ghost_right == 0, f"{ghost_right} rows with all-null unemp side")
 print(f"  Shape after merge      : {result.shape}  ✓")
 print("  Hard gates             : ALL PASS")
 
-# ── STEP 3 — Post-merge integrity ─────────────────────────────────────────────
+# ── STEP 3, Post-merge integrity ─────────────────────────────────────────────
 
-print("\nSTEP 3 — Post-merge integrity")
+print("\nSTEP 3, Post-merge integrity")
 
 def get_cell(df, dep, yr, col):
     return df.loc[(df["dep_code"] == dep) & (df["year"] == yr), col].iloc[0]
@@ -122,7 +122,7 @@ ok_c  = abs(val_c - 28.4) < 0.05
 print(f"  (c) dep=93 yr=2018 poverty_rate_disp : {val_c}  (expect 28.4)  {'✓' if ok_c else '✗ MISMATCH'}")
 
 if not (ok_a and ok_b and ok_c):
-    abort("Spot-check failure — not writing master")
+    abort("Spot-check failure, not writing master")
 
 # Sanity correlations
 corr_pov = result["unemployment_rate"].corr(result["poverty_rate_disp"])
@@ -132,8 +132,8 @@ print(f"\n  corr(unemployment_rate, poverty_rate_disp)     : {corr_pov:+.4f}  (e
 print(f"  corr(unemployment_rate, q2_disp)               : {corr_q2:+.4f}  (expect negative)")
 print(f"  corr(unemployment_rate, total_firm_creations)  : {corr_fir:+.4f}  (no prior expectation)")
 
-# Pairing trap — full 2018 row for dep 93
-print("\n  Pairing trap — full 2018 row for dep='93':")
+# Pairing trap, full 2018 row for dep 93
+print("\n  Pairing trap, full 2018 row for dep='93':")
 row93 = result[(result["dep_code"] == "93") & (result["year"] == 2018)]
 for col in row93.columns:
     print(f"    {col:35s}: {row93[col].iloc[0]}")
@@ -147,9 +147,9 @@ for yr, cnt in year_counts.items():
 gate(all_96, "Not all years have exactly 96 rows")
 print(f"  All years = 96 rows    : {'✓' if all_96 else '✗'}")
 
-# ── STEP 4 — Write & document ─────────────────────────────────────────────────
+# ── STEP 4, Write & document ─────────────────────────────────────────────────
 
-print("\nSTEP 4 — Write & document")
+print("\nSTEP 4, Write & document")
 
 # Preserve column order: master columns + unemployment_rate at end
 col_order = list(master.columns) + ["unemployment_rate"]
@@ -190,4 +190,4 @@ checks = [
 for label, status in checks:
     print(f"  {'PASS' if status else 'FAIL'}  {label}")
 print("=" * 60)
-print("ALL CHECKS PASSED — merge complete.\n")
+print("ALL CHECKS PASSED, merge complete.\n")

@@ -105,7 +105,7 @@ SOURCES = [
     {
         "name":       "Live Births (DS_NAISSANCES_FECONDITE_SERIES)",
         "url":        "https://www.data.gouv.fr/datasets/naissances-et-fecondite-series-longues",
-        "producer":   "INSEE · Naissances et fécondité — séries longues",
+        "producer":   "INSEE · Naissances et fécondité, séries longues",
         "desc":       (
             "Live births at place of residence (<code>LVB_PLACE_RES</code>, all ages, <code>AGE=_T</code>), "
             "2012–2021, metropolitan departments only. "
@@ -120,7 +120,7 @@ SOURCES = [
     {
         "name":       "Deaths (DS_ETAT_CIVIL_DECES_COMMUNES)",
         "url":        "https://www.data.gouv.fr/datasets/deces-et-mortalite-series-longues/",
-        "producer":   "INSEE · Décès et mortalité — séries longues",
+        "producer":   "INSEE · Décès et mortalité, séries longues",
         "desc":       (
             "Deaths by department of occurrence (<code>EC_MEASURE=DTH</code>, <code>OBS_STATUS=A</code> only), "
             "2012–2021, metropolitan departments only. "
@@ -151,7 +151,7 @@ SOURCES = [
             "Total marriages (HF + same-sex HH + FF) by department of marriage, 2012–2021. "
             "Three file formats across years: single-sheet XLS (2012–2013), multi-sheet XLS/XLSX "
             "with HF/HH/FF sheets (2014–2017, 2020), and CSV with REGDEP_MAR codes (2018, 2019, 2021). "
-            "<b>Critical:</b> CSV files count married <em>persons</em>, not weddings (2 per wedding) — "
+            "<b>Critical:</b> CSV files count married <em>persons</em>, not weddings (2 per wedding), "
             "NBMAR divided by 2 to harmonise with XLS files. "
             "Geography of marriage (not residence). "
             "Panel columns: <code>marriages</code> (weddings) and <code>marriage_rate</code> "
