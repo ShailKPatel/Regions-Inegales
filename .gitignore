@@ -20,3 +20,4 @@ venv/
 # Editor / OS / local tooling
 .claude/
 .DS_Store
+CLAUDE.md

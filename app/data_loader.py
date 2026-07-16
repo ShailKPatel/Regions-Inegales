@@ -1,20 +1,27 @@
 import os
+import sys
 import streamlit as st
 import pandas as pd
 
 _HERE = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(_HERE, "..", "scripts"))
+from panel_config import PANEL_START, PANEL_END
+
 _MASTER = os.path.join(_HERE, "..", "merged", "france_panel_master.csv")
 _POP    = os.path.join(_HERE, "..", "sources", "population_insee.csv")
 
 COLUMN_MAP = {
-    "Firm creation rate":  "firm_rate",
-    "Median income":       "q2_disp",
-    "Higher-ed share":     "edu_share_sup",
-    "Unemployment rate":   "unemployment_rate",
-    "Doctor density":      "doctor_density_per_100k",
-    "% Urban":             "pct_urban",
-    "Poverty rate":        "poverty_rate_disp",
-    "Gini":                "gini_disp",
+    "Firm creation rate":    "firm_rate",
+    "Median income":         "q2_disp",
+    "Higher-ed share":       "edu_share_sup",
+    "Unemployment rate":     "unemployment_rate",
+    "Doctor density":        "doctor_density_per_100k",
+    "% Urban":               "pct_urban",
+    "Poverty rate":          "poverty_rate_disp",
+    "Gini":                  "gini_disp",
+    "Birth rate":            "birth_rate",
+    "Death rate":            "death_rate",
+    "Marriage rate":         "marriage_rate",
 }
 
 IDF_CODES = {"75", "77", "78", "91", "92", "93", "94", "95"}
@@ -26,6 +33,7 @@ def load_panel() -> pd.DataFrame:
     pop = pd.read_csv(_POP, sep=";", dtype={"dep_code": object})
     pop["dep_code"] = pop["dep_code"].str.strip('"')
     df = df.merge(pop[["dep_code", "year", "pop_jan1"]], on=["dep_code", "year"], how="left")
+    df = df[(df["year"] >= PANEL_START) & (df["year"] <= PANEL_END)].reset_index(drop=True)
     df["firm_rate"] = df["total_firm_creations"] / df["pop_jan1"] * 1000
     return df
 

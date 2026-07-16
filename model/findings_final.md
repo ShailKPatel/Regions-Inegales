@@ -21,25 +21,25 @@ Mean |SHAP| aggregated by theory group:
 
 | Group | Features | Total mean \|SHAP\| | Share |
 |---|---|---|---|
-| **OPPORTUNITY** | edu_share_sup, q2_disp, pct_urban, doctor_density_per_100k | **2.914** | 60% |
-| **NECESSITY** | unemployment_rate, poverty_rate_disp | **0.727** | 15% |
-| Other | gini_disp, pct_wages | 1.183 | 25% |
+| **OPPORTUNITY** | edu_share_sup, q2_disp, pct_urban, doctor_density_per_100k | **2.746** | 58% |
+| **NECESSITY** | unemployment_rate, poverty_rate_disp | **0.924** | 20% |
+| Other | gini_disp, pct_wages | 1.043 | 22% |
 
-**Opportunity features are 4.0× more important than necessity
+**Opportunity features are 3.0× more important than necessity
 features** (SHAP basis, full-sample XGBoost).
 
 Per-feature breakdown (sorted by importance):
 
 | Feature | Group | Mean \|SHAP\| |
 |---|---|---|
-| Median income | Opportunity | 1.1762 |
-| Higher-ed share | Opportunity | 1.1727 |
-| Wage income share | Other | 0.7725 |
-| Poverty rate | Necessity | 0.6175 |
-| Gini coefficient | Other | 0.4110 |
-| Doctor density | Opportunity | 0.3845 |
-| % Urban | Opportunity | 0.1809 |
-| Unemployment rate | Necessity | 0.1096 |
+| Median income | Opportunity | 1.1140 |
+| Higher-ed share | Opportunity | 1.0505 |
+| Poverty rate | Necessity | 0.7383 |
+| Wage income share | Other | 0.6329 |
+| Gini coefficient | Other | 0.4096 |
+| Doctor density | Opportunity | 0.3957 |
+| % Urban | Opportunity | 0.1860 |
+| Unemployment rate | Necessity | 0.1853 |
 
 
 Figure: `figures/final_grouped_shap_bar.png`
@@ -52,13 +52,13 @@ Panel-aware cross-validation (XGBoost, 8 features, 960 rows):
 
 | Scheme | R² | MAE | Note |
 |---|---|---|---|
-| Leave-One-Year-Out (LOYO) | 0.906 | 0.8465 | Generalization to unseen years |
-| **Leave-One-Dept-Out (LODO)** | **0.674** | **1.3075** | **Generalization to unseen departments** |
-| Random 10-fold (KFold) | 0.921 | 0.7862 | Leaky baseline - DO NOT over-interpret |
+| Leave-One-Year-Out (LOYO) | 0.929 | 0.7564 | Generalization to unseen years |
+| **Leave-One-Dept-Out (LODO)** | **0.678** | **1.4951** | **Generalization to unseen departments** |
+| Random 10-fold (KFold) | 0.932 | 0.7479 | Leaky baseline — DO NOT over-interpret |
 
-The LODO R² of 0.674 is the credibility number: the model explains
-67% of firm-rate variance *in a department it has never seen
-during training*. The gap vs random KFold (0.247) is
+The LODO R² of 0.678 is the credibility number: the model explains
+68% of firm-rate variance *in a department it has never seen
+during training*. The gap vs random KFold (0.254) is
 honest: departments have persistent idiosyncrasies not fully captured by
 the 8-feature matrix. We report LODO as the headline and label it
 "generalization to unseen departments."
@@ -68,8 +68,8 @@ the 8-feature matrix. We report LODO as the headline and label it
 ## Necessity-Model Direct Test
 
 ### SHAP
-Unemployment rate ranks **last** of 8 features (mean |SHAP| = 0.110,
-vs opportunity total = 2.914). The SHAP dependence plot
+Unemployment rate ranks **last** of 8 features (mean |SHAP| = 0.185,
+vs opportunity total = 2.746). The SHAP dependence plot
 (`figures/final_shap_dependence_unemp.png`) shows predominantly negative
 SHAP values across the range of unemployment: higher unemployment is
 associated with *lower* predicted firm rates, not higher.
@@ -78,10 +78,10 @@ associated with *lower* predicted firm rates, not higher.
 
 | Spec | Unemployment coef | p-value | Poverty coef | p-value |
 |---|---|---|---|---|
-| OLS unweighted | -0.0182 | 0.759 | +0.4228 | 8.98e-42 |
-| OLS pop-weighted | -0.2245 | 0.0070 | +0.5896 | 4.94e-51 |
+| OLS unweighted | -0.3038 | 0.044 | +0.5968 | 2.77e-09 |
+| OLS pop-weighted | -0.6599 | 0.0007 | +0.8593 | 2.98e-12 |
 
-**Verdict: REJECTED.** Unemployment correlates *negatively* with firm creation rate in both OLS specifications (not positively, as the necessity hypothesis predicts): unweighted coef = −0.018 (p=0.759, NS), pop-weighted coef = −0.225 (p=0.007). Higher unemployment does not drive up entrepreneurship; if anything, it accompanies lower firm formation. The SHAP evidence is even cleaner: unemployment ranks last of 8 features (mean |SHAP| = 0.110), contributing less than 4% of total feature importance.
+**Verdict: **REJECTED.** Unemployment correlates *negatively* with firm creation rate (not positively as the necessity hypothesis predicts). OLS: unweighted coef = -0.304 (p=0.044), pop-weighted coef = -0.660 (p=0.001). Higher unemployment does not drive up entrepreneurship; if anything, it accompanies lower firm formation.**
 
 Note on poverty_rate_disp: its positive OLS coefficient and moderate SHAP
 rank do **not** support necessity entrepreneurship. Poverty correlates
@@ -98,27 +98,21 @@ with *informalisation of labour* rather than genuine opportunity creation.
 ### Drop Île-de-France (departments 75, 77, 78, 91–95)
 
 Île-de-France inflates Paris-region metrics and may drive the gini finding.
-Removing these 8 departments (88 remaining, 880 dept-years):
+Removing these 8 departments (88 remaining, 792 dept-years):
 
 | | With IdF | Without IdF |
 |---|---|---|
-| LODO R² | 0.674 | 0.768 |
-| Opportunity total SHAP | 2.914 | 2.546 |
-| Necessity total SHAP | 0.727 | 0.649 |
+| LODO R² | 0.678 | 0.713 |
+| Opportunity total SHAP | 2.746 | 2.377 |
+| Necessity total SHAP | 0.924 | 0.734 |
 | Opp > Nec ordering holds | Yes | Yes |
 
 OLS unemployment_rate without IdF:
-- Unweighted: coef=+0.1147, p=0.019
-- Pop-weighted: coef=+0.0937, p=0.115
+- Unweighted: coef=-0.1114, p=0.418
+- Pop-weighted: coef=-0.2599, p=0.092
 
-The opportunity > necessity ordering (SHAP) holds robustly without
-Île-de-France (2.55 vs 0.65). **Caveat on OLS unemployment:** the
-unweighted OLS coefficient flips to positive and significant without IdF
-(coef=+0.115, p=0.019), while the pop-weighted specification remains
-near-zero and insignificant (coef=+0.094, p=0.115). This sign instability
-reflects multicollinearity in the reduced sample. SHAP group importance,
-not OLS coefficients, is the primary evidence for the opportunity vs
-necessity contrast. The SHAP result is consistent across all specifications.
+The opportunity > necessity ordering and the negative/weak unemployment
+direction hold robustly without Île-de-France.
 
 ### Unweighted vs population-weighted OLS
 
@@ -128,9 +122,9 @@ dominant predictors.
 
 ### Gini coefficient
 
-Gini ranks 5th of 8 (mean |SHAP| = 0.411) in the full sample
-and drops further without Île-de-France (0.358).
-The gini finding is **weak and weighting-dependent**; we make no inequality
+Gini ranks 5th of 8 (mean |SHAP| = 0.410) in the full sample
+and drops further without Île-de-France (0.406).
+The gini finding is **weak and weighting-dependent** — we make no inequality
 claim from this model. The gini coefficient is retained in the feature
 matrix for theoretical completeness but is not interpreted causally.
 

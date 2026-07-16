@@ -17,8 +17,8 @@ fits French departmental data for 2012-2021.
 
 ## The data
 
-960 observations: 96 metropolitan departments x 10 years (2012-2021), 45 variables.
-Six official sources, each cross-checked against an independent external reference
+960 observations: 96 metropolitan departments x 10 years (2012-2021), 51 variables.
+Nine official sources, each cross-checked against an independent external reference
 before use in the model.
 
 - **Filosofi** (INSEE): household income, poverty rates, and the Gini coefficient
@@ -26,15 +26,21 @@ before use in the model.
 - **SIDE** (INSEE): total firm creations per department per year, cross-referenced
   against INSEE Premiere annual national totals.
 - **Localised unemployment** (INSEE): ILO unemployment rate, quarterly series
-  averaged to annual, full 960-cell cross-check against the INSEE BDM SDMX API
+  averaged to annual, full cross-check against the INSEE BDM SDMX API
   (85.2% exact match, 14.8% within +-0.1, zero beyond +-0.1).
 - **RPPS doctor density** (DREES): active doctors per 100k inhabitants, full
-  960-cell recompute from headcount and population data (max deviation 0.0025%).
+  recompute from headcount and population data (max deviation 0.0025%).
 - **Education** (INSEE): share of adults with higher-education diplomas, from
   three census snapshots (2011, 2016, 2022) linearly interpolated to annual;
   formula confirmed against the ANCT Observatoire des Territoires indicator.
 - **Grille de densite** (INSEE): percent urban by department, time-invariant,
   cross-checked against published INSEE density typology.
+- **Live births** (INSEE DS_NAISSANCES_FECONDITE_SERIES): live births at place of
+  residence per department per year; verified 960/960 pairs, 0 nulls.
+- **Deaths** (INSEE DS_ETAT_CIVIL_DECES_COMMUNES): deaths per department per year;
+  verified 960/960 pairs, 0 nulls.
+- **Marriages** (INSEE DEP6 annual files): total marriages per department per year,
+  2012-2021; verified 960/960 pairs, national totals consistent with published figures.
 
 Target variable: firm creation rate per 1,000 inhabitants.
 
@@ -52,13 +58,15 @@ exPlanations) used to measure each variable's average contribution to prediction
 
 Validation used three schemes. The honest number is leave-one-department-out
 (LODO), which trains the model on all other departments and tests on one it has
-never seen. LODO R2 = 0.674: the model explains 67% of firm-creation variance
+never seen. LODO R2 = 0.678: the model explains 68% of firm-creation variance
 in departments not used in training. The random 10-fold (KFold) result is
-R2 = 0.921, but this is a leaky baseline: departments appear in both train and
-test sets, inflating performance. The gap between 0.921 and 0.674 is expected
+R2 = 0.932, but this is a leaky baseline: departments appear in both train and
+test sets, inflating performance. The gap between 0.932 and 0.678 is expected
 and honest: departments have persistent idiosyncrasies the 8-feature set does not
-fully capture. Leave-one-year-out (LOYO) R2 = 0.906, which is strong but a less
-demanding test since year-to-year variation is smooth. LODO is the headline.
+fully capture. Leave-one-year-out (LOYO) R2 = 0.929, which is inflated by cross-sectional overlap
+with training departments: all 96 departments appear in training from the eight
+non-held-out years, so LOYO tests temporal extrapolation for known units, not
+generalization to new units. LODO is the headline.
 
 ---
 
@@ -66,40 +74,41 @@ demanding test since year-to-year variation is smooth. LODO is the headline.
 
 Opportunity beats necessity by a wide margin.
 
-Grouped mean absolute SHAP values, full panel:
+Grouped mean absolute SHAP values, full panel (OOF):
 
 | Group       | Features                                       | Total SHAP | Share |
 |-------------|------------------------------------------------|------------|-------|
-| Opportunity | income, education, % urban, doctor density     | 2.914      | 60%   |
-| Necessity   | unemployment rate, poverty rate                | 0.727      | 15%   |
-| Other       | Gini, wage share                               | 1.183      | 25%   |
+| Opportunity | income, education, % urban, doctor density     | 2.7463     | 58%   |
+| Necessity   | unemployment rate, poverty rate                | 0.9236     | 20%   |
+| Other       | Gini, wage share                               | 1.0426     | 22%   |
 
-Opportunity features are 4.0x more important than necessity features on the SHAP
-measure. Unemployment is the single weakest predictor of all 8 (mean |SHAP| = 0.110,
-rank 8/8). Median income (1.176) and higher-ed share (1.173) dominate.
+Opportunity features are 2.97x more important than necessity features on the SHAP
+measure. Unemployment is the single weakest predictor of all 8 (mean |SHAP| = 0.185,
+rank 8/8). Median income (1.114) and higher-ed share (1.051) dominate.
 
-Per-feature breakdown, sorted by importance:
+Per-feature breakdown, sorted by importance (OOF mean |SHAP|):
 
 | Feature             | Group       | Mean |SHAP| |
 |---------------------|-------------|--------------|
-| Median income       | Opportunity | 1.1762       |
-| Higher-ed share     | Opportunity | 1.1727       |
-| Wage income share   | Other       | 0.7725       |
-| Poverty rate        | Necessity   | 0.6175       |
-| Gini coefficient    | Other       | 0.4110       |
-| Doctor density      | Opportunity | 0.3845       |
-| % Urban             | Opportunity | 0.1809       |
-| Unemployment rate   | Necessity   | 0.1096       |
+| Median income       | Opportunity | 1.1140       |
+| Higher-ed share     | Opportunity | 1.0505       |
+| Poverty rate        | Necessity   | 0.7383       |
+| Wage income share   | Other       | 0.6329       |
+| Gini coefficient    | Other       | 0.4096       |
+| Doctor density      | Opportunity | 0.3957       |
+| % Urban             | Opportunity | 0.1860       |
+| Unemployment rate   | Necessity   | 0.1853       |
 
-OLS partial regression confirms: unemployment correlates negatively with firm
-creation rates in both the unweighted spec (coef = -0.018, p = 0.759) and the
-population-weighted spec (coef = -0.225, p = 0.007). Higher unemployment does not
-drive up entrepreneurship; if anything, it accompanies lower firm formation.
+OLS partial regression (department-clustered SE) confirms: unemployment correlates
+negatively with firm creation rates in both the unweighted spec (coef = -0.304,
+p = 0.044) and strongly so in the population-weighted spec (coef = -0.660,
+p = 0.001). Higher unemployment does not drive up entrepreneurship; it accompanies
+lower firm formation.
 
 **Verdict: the necessity-entrepreneurship hypothesis is rejected for metropolitan
 France, 2012-2021.**
 
-Note on poverty rate: its positive OLS coefficient and moderate SHAP rank (4th of
+Note on poverty rate: its positive OLS coefficient and moderate SHAP rank (3rd of
 8) do not confirm necessity push. The pattern reflects informalisation of labour:
 poorer areas have more micro-enterprise and
 auto-entrepreneur registrations for structural reasons, not because unemployment
@@ -113,29 +122,31 @@ The opportunity finding holds in both density subsets, not just in cities.
 
 | Context          | Departments | Opportunity SHAP share | Necessity SHAP share | Opp/Nec ratio | LODO R2 |
 |------------------|-------------|------------------------|----------------------|---------------|---------|
-| Full panel       | 96          | 60%                    | 15%                  | 4.0x          | 0.674   |
-| Urban/Intermediate | 45        | 59%                    | 16%                  | 3.8x          | 0.548   |
-| Rural            | 51          | 61%                    | 13%                  | 4.6x          | 0.653   |
+| Full panel       | 96          | 58%                    | 20%                  | 2.97x         | 0.678   |
+| Urban/Intermediate | 45        | 54%                    | 27%                  | 1.95x         | 0.573   |
+| Rural            | 51          | 61%                    | 15%                  | 4.19x         | 0.603   |
 
-Necessity's share is actually lower in rural departments (13%) than in urban ones
-(16%), and the opportunity/necessity ratio is highest in the rural subset (4.6x).
+Necessity's share is lower in rural departments (15%) than in urban ones (27%),
+and the opportunity/necessity ratio is highest in the rural subset (4.19x).
 
-One complication in the rural subset: OLS finds a positive and significant
-unemployment coefficient (unweighted coef = +0.214, p < 0.001). This looks like
-necessity push at first glance. But three things undercut that reading:
+One complication in the rural subset: OLS finds a positive unemployment coefficient
+in the rural-only specification (unweighted coef = +0.081, clustered p = 0.568;
+pop-weighted coef = +0.044, clustered p = 0.761). The coefficients are positive
+but well short of conventional significance after clustering standard errors by
+department. Three additional pieces of evidence undercut a necessity reading:
 
 1. SHAP still ranks unemployment last (8/8) in the rural-only model. It
    contributes negligible predictive variance once the other features are included.
 2. A pooled interaction test on the full 960-row panel (adding an unemployment
-   x rural interaction term) finds no significant interaction (p = 0.870
-   unweighted, p = 0.569 population-weighted). The rural/urban difference in
+   x rural interaction term) finds no significant interaction (clustered p = 0.231
+   unweighted, p = 0.401 population-weighted). The rural/urban difference in
    unemployment's coefficient is not statistically confirmed in the stronger test.
 3. The pattern is compositional: lower-income rural departments
    have both higher unemployment and more micro-enterprise registrations for
    structural reasons. This produces a positive correlation without implying that
    unemployment drives firm creation.
 
-The rural OLS result was investigated and did not support the necessity interpretation.
+The rural OLS result is inconclusive and does not support the necessity interpretation.
 
 ---
 
@@ -146,23 +157,28 @@ using year-interaction terms on the full 960-row panel (not year-by-year
 subsets, which are too small to trust).
 
 - The unemployment necessity channel WEAKENS over the period
-  (unemployment x year, population-weighted coef = -0.145, p < 0.001).
-- Opportunity features strengthen: education x year (+0.162, p < 0.001)
-  and income x year (+0.153, p = 0.002) both significant and positive.
-- A clean pre/post test (2012-2015 vs 2019-2021, dropping the SIDE-
-  affected 2016-2018 years) shows no necessity strengthening either.
+  (unemployment x year, pop-weighted coef = -0.160, p < 0.001; UW coef = -0.083,
+  p = 0.005). As year increases, the unemployment-firm-creation relationship
+  becomes more negative.
+- Opportunity features strengthen: education x year (pop-weighted coef = +0.146,
+  p < 0.001) and income x year (pop-weighted coef = +0.175, p < 0.001) both
+  significant and positive.
+- A clean pre/post test (2012-2014 vs 2019-2021, dropping 2015-2018 for clean
+  separation from the SIDE-affected years) confirms education's growth
+  (edu x late = +2.074, p < 0.001 WT). The late-period intercept shift
+  (firm_rate +1.59 WT, p < 0.001) reflects the general secular rise in registrations.
 
-The opportunity dominance is not a period artifact and does not fade. If
-anything, the necessity channel shrinks over the decade while opportunity
-deepens. Year-by-year SHAP shares are illustrative: single-year models use 96 rows
-each and are too noisy for inference.
+The opportunity dominance is not a period artifact. The necessity channel does not
+strengthen over the decade. Year-by-year SHAP shares (Test 3) are illustrative:
+single-year models use 96 rows each and are too noisy for inference, but opportunity
+exceeds necessity in all 10 years.
 
 ---
 
 ## What did not work
 
-**Gini coefficient**: tested as a predictor. Ranks 5th of 8 (mean |SHAP| = 0.411).
-The ranking is weaker without Ile-de-France (drops to 0.358), and the sign and
+**Gini coefficient**: tested as a predictor. Ranks 5th of 8 (mean |SHAP| = 0.410).
+The ranking is weaker without Ile-de-France (drops further), and the sign and
 magnitude of its OLS coefficient depend on the weighting scheme. No robust claim
 can be made about inequality driving or suppressing entrepreneurship from this
 model. It remains in the feature matrix; the result is inconclusive.
@@ -189,13 +205,24 @@ model. It remains in the feature matrix; the result is inconclusive.
    design is applied. The model shows which departmental characteristics predict
    firm-creation rates, not what would change if those characteristics changed.
 
-5. **Education interpolated.** Higher-ed share is observed at three census points
-   (2011, 2016, 2022) and linearly interpolated for all other years. Year-to-year
+5. **Education interpolated against a post-panel anchor.** Higher-ed share is
+   observed at census snapshots (2011, 2016, 2022) and linearly interpolated.
+   The 2022 anchor lies outside the panel window, so 2017–2021 values embed
+   future information. The LOYO 2021 fold is mildly contaminated; year-to-year
    variation in this variable is artificial by construction.
 
-6. **Doctor density as amenity proxy.** Physician density is used as a
-   quality-of-life proxy for the opportunity environment. Its positive contribution captures broader urban amenity endowments, not
-   a direct healthcare effect.
+6. **pct_urban is a single-vintage time-invariant classification.** The density
+   classification (Grille de densité, RP2021/2025 vintage) is applied uniformly
+   across all years and contributes only cross-sectional signal. It is a forward
+   look-ahead for 2012–2020.
+
+7. **pct_wages uses a different income concept from the other income variables.**
+   pct_wages is derived from the DEC income concept, while q2_disp, gini_disp,
+   and poverty_rate_disp use the DISP (disposable income) concept.
+
+8. **Doctor density as amenity proxy.** Physician density is used as a
+   quality-of-life proxy for the opportunity environment. Its positive contribution
+   captures broader urban amenity endowments, not a direct healthcare effect.
 
 ---
 
@@ -206,12 +233,13 @@ opportunity factors (education, income, and urban environment), not by
 necessity. Unemployment is the weakest of the 8 predictors tested,
 ranking last (8/8) on the SHAP measure in the full panel and in both the
 urban and rural subsets. Its partial OLS relationship with firm creation
-is negative in the full panel and in urban departments; in rural
-departments the raw coefficient is positive (+0.214), but this is not
-confirmed by the pooled interaction test (p = 0.870) and unemployment
-still ranks last in the rural SHAP model, so the pattern is compositional,
-not necessity-driven. Across every specification,
-unemployment carries little predictive weight. The
+is negative in the full panel (unweighted coef = -0.304, p = 0.044; pop-weighted
+coef = -0.660, p = 0.001) and in urban departments; in rural
+departments the raw coefficient is positive (+0.081), but this is not
+confirmed by the pooled interaction test (clustered p = 0.231 unweighted,
+p = 0.401 pop-weighted) and unemployment still ranks last in the rural SHAP
+model, so the pattern is compositional, not necessity-driven. Across every
+specification, unemployment carries little predictive weight. The
 necessity-entrepreneurship hypothesis, which is prominent in much of the
 comparative literature, does not fit the French regional evidence for
 this period.
@@ -220,4 +248,70 @@ this period.
 
 _Numbers locked from: model/findings_final.md and model/split_findings.md_
 _Data documentation: DATA_SOURCES.md_
-_Generated: 2026-06-17_
+_Generated: 2026-07-16_
+
+---
+
+## Appendix: birth rate determinants (secondary analysis, not a co-finding)
+
+**This is a methodological extension only.** It applies the same LODO + OOF SHAP
+framework to a second target variable (birth rate) using three additional data
+sources (births, deaths, marriages). It does not produce a second main claim.
+The main claim of this project is and remains the necessity hypothesis rejection above.
+
+An exploratory XGBoost + SHAP model using the same 8-feature LODO scheme,
+now targeting birth rate (live births per 1,000 inhabitants). Features:
+marriage rate (Social), median income / unemployment rate / poverty rate (Economic),
+higher-ed share / % urban / doctor density / Gini (Structural).
+
+### Validation
+
+| Scheme | R2 | MAE |
+|--------|-----|-----|
+| Leave-One-Year-Out (LOYO) | 0.952 | 0.3417 |
+| **Leave-One-Dept-Out (LODO) ★** | **0.715** | **0.8406** |
+| Random 10-fold (KFold) | 0.948 | 0.3517 |
+
+LODO R2 = 0.715: 72% of birth-rate variance explained in held-out departments.
+Stronger than the firm-rate model (0.678).
+
+### SHAP feature importance (OOF, LODO)
+
+| Feature | Group | Mean |SHAP| |
+|---|---|---|
+| % Urban | Structural | 1.1452 |
+| Poverty rate | Economic | 0.3797 |
+| Marriage rate | Social | 0.2695 |
+| Median income | Economic | 0.2610 |
+| Doctor density | Structural | 0.2213 |
+| Unemployment rate | Economic | 0.1380 |
+| Gini coefficient | Structural | 0.0939 |
+| Higher-ed share | Structural | 0.0700 |
+
+Group totals: Structural 59%, Economic 30%, Social 10%.
+
+### Key OLS findings (department-clustered SE)
+
+- marriage_rate: +0.43, p = 0.0009 (strong positive, robust to weighting)
+- q2_disp (median income): -0.0006, p < 0.001 (negative — demographic transition:
+  richer departments have fewer births per capita)
+- pct_urban: +0.08, p < 0.001 (positive — urban departments have higher birth rates,
+  likely driven by younger population structure and immigration in IDF and major cities)
+- edu_share_sup: +0.13, p < 0.001 (positive — OLS runs counter to SHAP rank,
+  possibly via age structure confounding)
+- unemployment_rate: -0.05, p = 0.63 (not significant)
+
+### Interpretation
+
+Urban structure dominates (% urban alone accounts for 1.14 of total SHAP), capturing
+the demographic concentration and younger age structure in metropolitan departments.
+Marriage rate is the strongest individually interpretable social predictor (OLS p = 0.001).
+Income is negative after conditioning on urbanisation, consistent with the demographic
+transition: higher-income departments have lower fertility once urban effects are removed.
+Unemployment is again the weakest predictor (ranked 6/8 by SHAP) and is not
+significant in OLS — a parallel to the firm-rate model's finding.
+
+Figures generated: figures/birth_grouped_shap_bar.png, figures/birth_shap_beeswarm.png,
+figures/birth_shap_dependence_marriage.png.
+
+_Numbers locked from: model/findings_birth.md (generated 2026-07-16)_

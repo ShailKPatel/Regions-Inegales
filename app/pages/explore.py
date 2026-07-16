@@ -5,7 +5,7 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 from scipy import stats
-from utils import page_header, plotly_defaults, BLUE, RED, WHITE
+from utils import page_header, plotly_defaults, render_footer, BLUE, RED, WHITE
 
 from data_loader import load_panel, get_dept_names
 
@@ -24,6 +24,9 @@ X_FEATURES = {
     "Doctor density (per 100k)": "doctor_density_per_100k",
     "% Urban":                   "pct_urban",
     "Wage income share (%)":     "pct_wages",
+    "Birth rate (per 1,000)":    "birth_rate",
+    "Marriage rate (per 1,000)": "marriage_rate",
+    "Death rate (per 1,000)":    "death_rate",
 }
 COLOR_BY = {
     "Density class (urban/rural)": "density_class",
@@ -209,3 +212,5 @@ with col_r2:
         st.metric("r (all departments)", f"{r_all_val:.3f}", delta=f"{delta:+.3f}")
     else:
         st.metric("r (all departments)", f"{r_all_val:.3f}")
+
+render_footer()

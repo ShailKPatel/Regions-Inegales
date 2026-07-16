@@ -2,11 +2,12 @@
 
 ## Master panel
 
-- Shape: 960×45 — 96 metropolitan departments × 10 years (2012–2021).
+- Shape: 960×51 — 96 metropolitan departments × 10 years (2012–2021).
 - Keys: `dep_code` (2-char string, leading zeros preserved, incl. 2A/2B), `year` (int). Scope: metropolitan France; overseas departments excluded throughout.
-- 6 merged sources: Filosofi (income/poverty/inequality), Firm Creations (SIDE), Unemployment, Doctor Density, Education (interpolated annual panel), Urban/Rural Density.
+- 9 merged sources: Filosofi (income/poverty/inequality), Firm Creations (SIDE), Unemployment, Doctor Density, Education (interpolated annual panel), Urban/Rural Density, Live Births, Deaths, Marriages.
 - Every merge validated to exactly 960 rows, 0 duplicate keys, 96 rows per year.
-- Column inventory: 2 keys, 7 metadata, 27 candidate features, 9 target-related; full roles and collinearity map in `merged/_column_roles.md`.
+- Column inventory: 2 keys, 7 metadata, 33 candidate features, 9 target-related; full roles and collinearity map in `merged/_column_roles.md`.
+- Pre-demographic backup: `merged/france_panel_master_pre_birth.csv` (45 columns, before births/deaths/marriages added).
 
 Auxiliary asset not merged into master: departmental population estimates (`sources/population_insee.csv`, INSEE, 1975–2026 series), used as denominator cross-check for doctor density; kept for feature engineering.
 
@@ -39,7 +40,7 @@ Auxiliary asset not merged into master: departmental population estimates (`sour
 
 - Two income concepts retained in parallel: declared (`_dec`) and disposable (`_disp`). Disposable (post-tax, post-transfer) is the policy-relevant concept for inequality research; use one family consistently.
 - Department-level rows only extracted from each year's base; regional and national aggregates excluded.
-- `poverty_rate_disp` and `poverty_rate_dec` use the 60%-of-median threshold. See provenance notes for 2012 caveats on both columns.
+- `poverty_rate_disp` and `poverty_rate_dec` use the 60%-of-median threshold. See provenance notes for the `poverty_rate_dec` null structure in 2012.
 
 **Verification** — 96-department sweep for median income and Gini across representative years; spot anchors against published INSEE summary tables. No full-column external cross-check (BDM does not expose a Filosofi SDMX series at department level).
 
@@ -157,12 +158,92 @@ Flag `density_is_static = True` on all 960 rows.
 
 ---
 
+## Source 7 — Live Births (INSEE DS_NAISSANCES_FECONDITE_SERIES)
+
+**Source / producer** — INSEE, "Naissances et fécondité — séries longues".
+
+**Download URLs**
+- Long series (data.gouv): https://www.data.gouv.fr/datasets/naissances-et-fecondite-series-longues
+- Per commune flat CSV (data.gouv): https://www.data.gouv.fr/fr/datasets/nombre-de-naissances-par-commune/
+- Departmental CSVs (INSEE): https://www.insee.fr/fr/statistiques/8582142
+
+**File** — `DS_NAISSANCES_FECONDITE_SERIES_CSV_FR/DS_NAISSANCES_FECONDITE_SERIES_data.csv` (raw, now deleted after extraction). Clean extracted file: `sources/births_insee.csv`.
+
+**Variables added to panel**
+- `live_births`: live births at place of residence (`LVB_PLACE_RES`, measure code, total age `_T`). Raw integer count per department per year.
+- `birth_rate`: `live_births / pop_jan1 × 1000`. Computed at merge time using `sources/population_insee.csv` as denominator. Stored as float, 4 decimal places.
+
+**Key methodological decisions**
+- `LVB_PLACE_RES` (place of residence) used rather than `LVB_PLACE_REG` (place of registration). Residence is the correct geographic attribution for a panel of departmental characteristics.
+- Total age group (`AGE = _T`) only; age-specific fertility rates not used.
+- Overseas departments (971, 972, 973, 974, 976) excluded to match the metropolitan panel scope.
+
+**Verification** — 960/960 (dep_code, year) pairs present; 0 nulls; 0 duplicate keys; 96 metro departments matched exactly against master panel dep_code list. Rate range: 6.5–18.8 per 1,000 (Creuse low, Seine-Saint-Denis high), consistent with published INSEE departmental natality profiles.
+
+---
+
+## Source 8 — Deaths (INSEE DS_ETAT_CIVIL_DECES_COMMUNES)
+
+**Source / producer** — INSEE, "Décès et mortalité — séries longues".
+
+**Download URLs**
+- Long series (data.gouv): https://www.data.gouv.fr/datasets/deces-et-mortalite-series-longues/
+- Per commune flat CSV (data.gouv): https://www.data.gouv.fr/fr/datasets/nombre-de-deces-par-commune/
+
+**File** — `DS_ETAT_CIVIL_DECES_COMMUNES_CSV_FR/DS_ETAT_CIVIL_DECES_COMMUNES_data.csv` (raw, now deleted after extraction). Clean extracted file: `sources/deaths_insee.csv`.
+
+**Variables added to panel**
+- `deaths`: number of deaths (`EC_MEASURE = DTH`, `OBS_STATUS = A` only). Raw integer count per department per year.
+- `death_rate`: `deaths / pop_jan1 × 1000`. Computed at merge time using `sources/population_insee.csv` as denominator. Stored as float, 4 decimal places.
+
+**Key methodological decisions**
+- `GEO_OBJECT = DEP` rows only; commune, region, and other geographic levels excluded.
+- `OBS_STATUS = M` (missing/not applicable) rows dropped; only `OBS_STATUS = A` (normal) retained.
+- Overseas departments (971, 972, 973, 974, 976) excluded to match the metropolitan panel scope.
+
+**Verification** — 960/960 (dep_code, year) pairs present; 0 nulls; 0 duplicate keys; 96 metro departments matched exactly against master panel dep_code list. Rate range: 5.3–17.4 per 1,000, consistent with published INSEE departmental mortality profiles.
+
+---
+
+## Source 9 — Marriages (INSEE DEP6 annual files)
+
+**Source / producer** — INSEE, civil registration state ("État civil"), DEP6 tables: monthly marriages by department and region of marriage.
+
+**Download URLs (by year)**
+- 2012: https://www.insee.fr/fr/statistiques/2020625
+- 2013: https://www.insee.fr/fr/statistiques/2020490
+- 2014: https://www.insee.fr/fr/statistiques/1913527
+- 2015: https://www.insee.fr/fr/statistiques/2561535
+- 2016: https://www.insee.fr/fr/statistiques/3317603
+- 2017: https://www.insee.fr/fr/statistiques/3704307
+- 2018: https://www.insee.fr/fr/statistiques/4273672
+- 2019: https://www.insee.fr/fr/statistiques/5012966
+- 2020: https://www.insee.fr/fr/statistiques/6045407
+- 2021: https://www.insee.fr/fr/statistiques/6790710
+
+**Files** — Raw files now deleted after extraction. Clean extracted file: `sources/marriages_insee.csv`.
+
+**Variables added to panel**
+- `marriages`: total marriages (all types: HF, HH, FF) per department per year. Integer count (number of weddings, not persons).
+- `marriage_rate`: `marriages / pop_jan1 × 1000`. Computed at merge time using `sources/population_insee.csv`. Stored as float, 4 decimal places.
+
+**Key methodological decisions**
+- Files span three formats across years: XLS with single EFF sheet (2012–2013), XLS/XLSX with separate HF/HH/FF sheets (2014–2017, 2020), and CSV with REGDEP_MAR codes (2018, 2019, 2021). All three sheet types summed to get the total across marriage types.
+- **Critical: CSV files (2018, 2019, 2021) count married persons (2 per wedding), not weddings.** NBMAR was divided by 2 to convert to wedding counts consistent with the XLS files. Verified against published INSEE national totals (e.g., 2019 national total 228,000 weddings confirmed via CSV total ÷ 2).
+- REGDEP_MAR codes in CSV files follow the format `[2-digit region code][2-digit or 2A/2B dept code]` (e.g., "1175" = region 11 + dept 75 = Paris). Regional aggregates (ending "XX"), national rows ("FM", "FE"), and overseas departments (3-digit codes 971–976) excluded.
+- Geography of marriage, not residence: counts marriages registered in each department, not where the spouses reside. Standard for this series.
+- 2022 microdata folder (`irsomar2022_dd7_csv`) contained only 2022 cross-sectional tables — not used, deleted.
+
+**Verification** — 960/960 (dep_code, year) pairs present; 0 nulls; 0 duplicate keys. National totals per year consistent with known INSEE figures: 239,840 (2012), ~228,000 (2018–2019), 150,545 (2020 COVID drop), ~213,000 (2021 recovery). Rate range: 1.8–4.5 per 1,000.
+
+---
+
 ## Provenance notes
 
 - **Cantal 4-commune blanks**: INSEE suppressed education data for 4 Cantal communes (15031, 15035, 15047, 15171). The likely cause is a commune restructuring (these communes appear to have been folded into Neussargues-Moissac, 15141); this was not independently confirmed against INSEE commune records. This is a restructuring artefact, NOT confidentiality suppression. The Cantal (dep 15) `edu_share_sup` is computed from the remaining communes; the suppressed communes' combined population weight is unquantifiable from this census file alone.
 
 - **`poverty_rate_dec` null for all 2012**: 96 null values (all 96 departments, year 2012 only) in the declared-income poverty rate. Structural: the declared-income Pauvres file did not exist for 2012. Use `poverty_rate_disp` as the consistent alternative for cross-year analysis, or exclude 2012 from any `_dec`-based analyses. The nulls are expected; they are not a merge error.
 
-- **`poverty_rate_disp` 2012 note**: Although non-null, the 2012 values for `poverty_rate_disp` were sourced from the declared-income Pauvres file (no disposable-income version existed for 2012). Values are inflated relative to 2013–2021 (mean ~21.6% in 2012 vs ~14.5% for subsequent years). Treat 2012 as a break point in `poverty_rate_disp` cross-year comparisons.
+- **`poverty_rate_disp` 2012 source**: Sourced from INSEE Filosofi "Revenus et pauvreté des ménages en 2012" (dataset 1895078, URL: https://www.insee.fr/fr/statistiques/2043745). This is the standard Filosofi release for 2012 at department level and is the consistent alternative to `poverty_rate_dec` for cross-year analysis.
 
 - **INSEE firm-stat micro/non-micro split coding error 2015+**: Affects some SIDE sub-tables in the source data. The total creation counts (which `total_firm_creations` and our breakdowns use) are unaffected. This further supports the choice of `creations_individual` as the unified EI column rather than attempting a micro/non-micro sub-split.
