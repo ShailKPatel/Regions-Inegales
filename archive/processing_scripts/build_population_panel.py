@@ -14,7 +14,7 @@ POP_OUT = "sources/population_insee.csv"
 CHECK_OUT = "sources/_doctor_density_pop_crosscheck.csv"
 
 # ---------------------------------------------------------------------------
-# TASK A — extract population panel
+# TASK A, extract population panel
 # ---------------------------------------------------------------------------
 
 def is_metro_dep(code):
@@ -66,7 +66,7 @@ print("Paris (75) by year:")
 for _, r in paris.iterrows():
     print(f"  {r.year}: {r.pop_jan1:,}")
 
-# Save — dep_code quoted, semicolon separator
+# Save, dep_code quoted, semicolon separator
 with open(POP_OUT, "w", newline="", encoding="utf-8") as f:
     f.write('"dep_code";year;pop_jan1\n')
     for _, r in df_pop.iterrows():
@@ -75,7 +75,7 @@ with open(POP_OUT, "w", newline="", encoding="utf-8") as f:
 print(f"\nSaved: {POP_OUT}  ({len(df_pop)} rows × 3 cols)")
 
 # ---------------------------------------------------------------------------
-# TASK B — density cross-verification
+# TASK B, density cross-verification
 # ---------------------------------------------------------------------------
 
 print("\n=== TASK B: density cross-verification ===")
@@ -121,7 +121,7 @@ if len(beyond) > 0:
     print("\nBy dep_code (top 10):")
     print(beyond.groupby("dep_code").size().nlargest(10).to_string())
 else:
-    print("\nNo cells beyond ±1% — perfect agreement.")
+    print("\nNo cells beyond ±1%, perfect agreement.")
 
 # PASS/FAIL
 n_gt2 = (abs_diff > 0.02).sum()

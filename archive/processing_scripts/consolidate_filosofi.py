@@ -70,7 +70,7 @@ def read_xls_ensemble(filepath: pathlib.Path) -> pd.DataFrame:
     """
     Read department-level data from an XLS/XLSX file.
     - Standard files (DEC, DISP, Pauvres): read the ENSEMBLE sheet.
-    - TRDECILES files: no ENSEMBLE sheet — instead read all TRDEC_1…TRDEC_10
+    - TRDECILES files: no ENSEMBLE sheet, instead read all TRDEC_1…TRDEC_10
       sheets and merge them horizontally on CODGEO (mirrors the flat CSV layout
       used in 2018–2021).
     """
@@ -102,7 +102,7 @@ def read_xls_ensemble(filepath: pathlib.Path) -> pd.DataFrame:
     for sheet in sorted(trdec_sheets, key=lambda s: int(s.split("_")[-1])):
         frames.append(_read_xls_sheet(filepath, sheet, engine))
 
-    # Merge all TRDEC sheets on CODGEO — each sheet adds different columns
+    # Merge all TRDEC sheets on CODGEO, each sheet adds different columns
     base = frames[0]
     for fr in frames[1:]:
         new_cols = ["CODGEO"] + [c for c in fr.columns if c not in base.columns]
@@ -179,7 +179,7 @@ def horizontal_merge(dfs: list[pd.DataFrame], source_names: list[str]) -> pd.Dat
                 df[["CODGEO", col]], on="CODGEO", suffixes=("_a","_b"), how="outer"
             )
             if check[f"{col}_a"].equals(check[f"{col}_b"]):
-                drop_from_new.append(col)   # identical — safe to drop
+                drop_from_new.append(col)   # identical, safe to drop
             else:
                 orig_c = col_concept.get(col, "UNK")
                 rename_in_base[col] = f"{col}_{orig_c}"
@@ -216,10 +216,10 @@ def horizontal_merge(dfs: list[pd.DataFrame], source_names: list[str]) -> pd.Dat
 
 
 # ---------------------------------------------------------------------------
-# TASK 1 — Column inventory
+# TASK 1, Column inventory
 # ---------------------------------------------------------------------------
 print("=" * 72)
-print("TASK 1 — COLUMN INVENTORY BY YEAR")
+print("TASK 1, COLUMN INVENTORY BY YEAR")
 print("=" * 72)
 
 # Store column sets per year for the presence/absence table later
@@ -266,10 +266,10 @@ for year in ALL_YEARS:
 
 
 # ---------------------------------------------------------------------------
-# TASK 2 — Wide CSV per year (department level)
+# TASK 2, Wide CSV per year (department level)
 # ---------------------------------------------------------------------------
 print("\n\n" + "=" * 72)
-print("TASK 2 — BUILDING filosofi_YYYY_dept.csv FOR EACH YEAR")
+print("TASK 2, BUILDING filosofi_YYYY_dept.csv FOR EACH YEAR")
 print("=" * 72)
 
 year_dfs: dict[int, pd.DataFrame] = {}
@@ -312,10 +312,10 @@ for year in ALL_YEARS:
 
 
 # ---------------------------------------------------------------------------
-# TASK 3 — Stack all years
+# TASK 3, Stack all years
 # ---------------------------------------------------------------------------
 print("\n\n" + "=" * 72)
-print("TASK 3 — STACKING ALL YEARS → filosofi_all_years.csv")
+print("TASK 3, STACKING ALL YEARS → filosofi_all_years.csv")
 print("=" * 72)
 
 all_frames = [year_dfs[y] for y in sorted(year_dfs.keys())]
@@ -347,13 +347,13 @@ for col in all_cols_sorted:
 
 
 # ---------------------------------------------------------------------------
-# TASK 4 — Sanity checks
+# TASK 4, Sanity checks
 # ---------------------------------------------------------------------------
 print("\n\n" + "=" * 72)
-print("TASK 4 — SANITY CHECKS")
+print("TASK 4, SANITY CHECKS")
 print("=" * 72)
 
-# 4a — YEAR completeness
+# 4a, YEAR completeness
 print("\n  Rows per year:")
 year_counts = master["YEAR"].value_counts().sort_index()
 for y, n in year_counts.items():
@@ -365,7 +365,7 @@ if missing_years:
 else:
     print("  ✓ All years 2012–2021 present")
 
-# 4b — CODGEO values
+# 4b, CODGEO values
 print("\n  Unexpected CODGEO values (not standard 2-char dept code):")
 bad = master[~is_dept_codgeo(master["CODGEO"])]["CODGEO"].unique()
 if len(bad) == 0:
@@ -373,7 +373,7 @@ if len(bad) == 0:
 else:
     print(f"  ⚠ Unexpected: {sorted(bad)[:30]}")
 
-# 4c — Departments that appear fewer than 10 times
+# 4c, Departments that appear fewer than 10 times
 print("\n  Departments with < 10 year-appearances (expected max 10):")
 dept_counts = master["CODGEO"].value_counts()
 sparse = dept_counts[dept_counts < 10]
@@ -383,13 +383,13 @@ else:
     for code, count in sparse.sort_index().items():
         print(f"    {code}: {count} year(s)")
 
-# 4d — Key variable columns search
+# 4d, Key variable columns search
 # INSEE naming note:
-#   Median income = Q2XX (second quartile), not "MED" — search for "Q2"
+#   Median income = Q2XX (second quartile), not "MED", search for "Q2"
 #   Poverty rate  = TP60XX (overall rate in Pauvres files)
 #   Gini          = GIXX
 print("\n  Key variables search:")
-print("  (Note: INSEE calls median income Q2, not MED — e.g. Q212 for 2012)")
+print("  (Note: INSEE calls median income Q2, not MED, e.g. Q212 for 2012)")
 for pattern in ("^Q2[0-9]", "TP60[0-9]", "^GI[0-9]"):
     import re as _re
     matches = [c for c in master.columns if _re.search(pattern, c, _re.IGNORECASE)]

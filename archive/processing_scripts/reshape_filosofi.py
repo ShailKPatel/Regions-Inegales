@@ -28,7 +28,7 @@ MAPPING = [
     ("CODGEO",              "dep_code"),
     ("YEAR",                "year"),
     ("LIBGEO",              "dep_name"),
-    # Counts — 2012 bare, 2013+ _DEC suffix
+    # Counts, 2012 bare, 2013+ _DEC suffix
     ("NBMEN{YY}",           "n_households"),
     ("NBMEN{YY}_DEC",       "n_households"),
     ("NBPERS{YY}",          "n_persons"),
@@ -41,8 +41,8 @@ MAPPING = [
     ("D1{YY}_DEC",          "d1_dec"),
     ("D9{YY}_DEC",          "d9_dec"),
     ("GI{YY}_DEC",          "gini_dec"),
-    ("S80S20{YY}_DEC",      "s80s20_dec"),   # exact string replace — safe
-    ("RD_DEC",              "d9_d1_dec"),    # no year suffix — same col every year
+    ("S80S20{YY}_DEC",      "s80s20_dec"),   # exact string replace, safe
+    ("RD_DEC",              "d9_d1_dec"),    # no year suffix, same col every year
     # DISP income indicators ★
     ("Q1{YY}_DISP",         "q1_disp"),
     ("Q2{YY}_DISP",         "q2_disp"),
@@ -128,7 +128,7 @@ for year in range(2012, 2022):
     for pattern, target in MAPPING:
         if target in result:
             continue                               # already filled by an earlier mapping
-        src_col = pattern.replace("{YY}", yy)      # plain string replace — no regex
+        src_col = pattern.replace("{YY}", yy)      # plain string replace, no regex
         if src_col not in slice_df.columns:
             continue
         if target in ("dep_code", "dep_name"):
@@ -203,7 +203,7 @@ for col, lo, hi, label in checks:
     if col not in panel.columns or panel[col].isna().all():
         print(f"\n  {col}: ⚠ all null")
         continue
-    print(f"\n  {col} — {label}  [expected {lo}–{hi}]")
+    print(f"\n  {col}, {label}  [expected {lo}–{hi}]")
     yr_stats = (panel.groupby("year")[col]
                 .agg(["min", "max", "mean"])
                 .round(1))

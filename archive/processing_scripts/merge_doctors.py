@@ -20,16 +20,16 @@ def abort(msg):
     sys.exit(1)
 
 # ---------------------------------------------------------------------------
-# STEP 0 — backup
+# STEP 0, backup
 # ---------------------------------------------------------------------------
-print("STEP 0 — backup")
+print("STEP 0, backup")
 shutil.copy2(MASTER, BACKUP)
 print(f"  Backed up → {BACKUP}")
 
 # ---------------------------------------------------------------------------
-# STEP 1 — re-assert both inputs
+# STEP 1, re-assert both inputs
 # ---------------------------------------------------------------------------
-print("\nSTEP 1 — re-assert inputs")
+print("\nSTEP 1, re-assert inputs")
 
 master = pd.read_csv(MASTER, sep=";", dtype={"dep_code": str})
 density = pd.read_csv(DENSITY, sep=";", dtype={"dep_code": str})
@@ -54,9 +54,9 @@ if master.shape[1] != 39:
 print("  Master column count 39  OK")
 
 # ---------------------------------------------------------------------------
-# STEP 2 — outer merge, single new column
+# STEP 2, outer merge, single new column
 # ---------------------------------------------------------------------------
-print("\nSTEP 2 — merge")
+print("\nSTEP 2, merge")
 
 density_col = density[KEYS + ["doctor_density_per_100k"]]
 
@@ -64,7 +64,7 @@ merged = master.merge(density_col, on=KEYS, how="outer")
 
 # HARD GATES
 if len(merged) != 960:
-    abort(f"Outer merge yielded {len(merged)} rows (expected 960) — key mismatch")
+    abort(f"Outer merge yielded {len(merged)} rows (expected 960), key mismatch")
 if merged.duplicated(KEYS).sum():
     abort("Duplicate keys after merge")
 if merged["doctor_density_per_100k"].isnull().sum():
@@ -83,9 +83,9 @@ print(f"  Dup keys: 0  OK")
 print(f"  Ghost rows: 0  OK")
 
 # ---------------------------------------------------------------------------
-# STEP 3 — integrity
+# STEP 3, integrity
 # ---------------------------------------------------------------------------
-print("\nSTEP 3 — integrity checks")
+print("\nSTEP 3, integrity checks")
 
 def cell(df, dep, yr, col):
     return df.loc[(df.dep_code == dep) & (df.year == yr), col].iloc[0]
@@ -111,7 +111,7 @@ for col in ["q2_disp", "unemployment_rate", "poverty_rate_disp"]:
     print(f"    density ↔ {col}: r = {r:.4f}")
 
 # Pairing trap
-print("\n  Pairing trap — (05, 2021) full row:")
+print("\n  Pairing trap, (05, 2021) full row:")
 row05 = merged[(merged.dep_code == "05") & (merged.year == 2021)].iloc[0]
 print(f"    dep={row05.dep_code}  year={row05.year}  dep_name={row05.dep_name}")
 print(f"    doctor_density_per_100k = {row05.doctor_density_per_100k}")
@@ -119,7 +119,7 @@ print(f"    q2_disp                 = {row05.q2_disp}")
 print(f"    unemployment_rate       = {row05.unemployment_rate}")
 print(f"    poverty_rate_disp       = {row05.poverty_rate_disp}")
 
-print("\n  Pairing trap — (27, 2019) Eure low-density profile:")
+print("\n  Pairing trap, (27, 2019) Eure low-density profile:")
 row27 = merged[(merged.dep_code == "27") & (merged.year == 2019)].iloc[0]
 print(f"    dep={row27.dep_code}  year={row27.year}  dep_name={row27.dep_name}")
 print(f"    doctor_density_per_100k = {row27.doctor_density_per_100k}")
@@ -134,9 +134,9 @@ if (year_counts != 96).any():
 print(f"\n  96 rows × 10 years: {dict(year_counts)}  OK")
 
 # ---------------------------------------------------------------------------
-# STEP 4 — overwrite master
+# STEP 4, overwrite master
 # ---------------------------------------------------------------------------
-print("\nSTEP 4 — overwriting master")
+print("\nSTEP 4, overwriting master")
 
 # dep_code must stay quoted (str, leading zeros)
 merged.to_csv(MASTER, sep=";", index=False)

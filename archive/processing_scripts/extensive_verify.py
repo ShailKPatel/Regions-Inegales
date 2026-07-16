@@ -37,7 +37,7 @@ print(f"Filosofi shape : {filo.shape}")
 print(f"Firms shape    : {firms.shape}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LAYER 1-A — FILOSOFI STRUCTURAL INTEGRITY
+#  LAYER 1-A, FILOSOFI STRUCTURAL INTEGRITY
 # ══════════════════════════════════════════════════════════════════════════════
 section("LAYER 1-A  Filosofi structural integrity (960 rows)")
 
@@ -52,10 +52,10 @@ bad = filo[
     )
 ]
 if bad.empty:
-    print("  PASS — all 960 rows satisfy strict ordering ✓")
+    print("  PASS, all 960 rows satisfy strict ordering ✓")
 else:
     violations["filo_l1"] += len(bad)
-    print(f"  FAIL — {len(bad)} violation(s):")
+    print(f"  FAIL, {len(bad)} violation(s):")
     print(bad[["dep_code","year","d1_disp","q1_disp","q2_disp","q3_disp","d9_disp"]].to_string(index=False))
 
 # Same check for dec (declared income) columns
@@ -68,10 +68,10 @@ bad_dec = filo[
     )
 ]
 if bad_dec.empty:
-    print("  PASS — dec-income ordering also holds ✓")
+    print("  PASS, dec-income ordering also holds ✓")
 else:
     violations["filo_l1"] += len(bad_dec)
-    print(f"  FAIL (dec) — {len(bad_dec)} violation(s):")
+    print(f"  FAIL (dec), {len(bad_dec)} violation(s):")
     print(bad_dec[["dep_code","year","d1_dec","q1_dec","q2_dec","q3_dec","d9_dec"]].to_string(index=False))
 
 # ── Check 2: Gini bounds ──────────────────────────────────────────────────────
@@ -83,10 +83,10 @@ for col in ["gini_disp", "gini_dec"]:
         print(f"  {col}: no hard errors ✓")
     else:
         violations["filo_l1"] += len(hard)
-        print(f"  {col}: HARD ERROR — {len(hard)} rows outside (0,1)")
+        print(f"  {col}: HARD ERROR, {len(hard)} rows outside (0,1)")
         print(hard[["dep_code","year",col]].to_string(index=False))
     if not soft.empty:
-        print(f"  {col}: SOFT FLAG — {len(soft)} rows outside (0.15,0.55):")
+        print(f"  {col}: SOFT FLAG, {len(soft)} rows outside (0.15,0.55):")
         print(soft[["dep_code","year",col]].to_string(index=False))
     else:
         print(f"  {col}: soft range fine ✓")
@@ -97,11 +97,11 @@ filo["_ratio_check"] = filo["d9_disp"] / filo["d1_disp"]
 filo["_ratio_pct_err"] = (filo["_ratio_check"] - filo["d9_d1_disp"]).abs() / filo["d9_d1_disp"] * 100
 bad_ratio = filo[filo["_ratio_pct_err"] > 1.0]
 if bad_ratio.empty:
-    print("  PASS — all 960 ratios match within 1% ✓")
+    print("  PASS, all 960 ratios match within 1% ✓")
     print(f"  Max discrepancy: {filo['_ratio_pct_err'].max():.4f}%")
 else:
     violations["filo_l1"] += len(bad_ratio)
-    print(f"  FAIL — {len(bad_ratio)} mismatches (>1%):")
+    print(f"  FAIL, {len(bad_ratio)} mismatches (>1%):")
     print(bad_ratio[["dep_code","year","d9_disp","d1_disp","_ratio_check","d9_d1_disp","_ratio_pct_err"]].to_string(index=False))
 filo.drop(columns=["_ratio_check","_ratio_pct_err"], inplace=True)
 
@@ -110,10 +110,10 @@ filo["_ratio_check"] = filo["d9_dec"] / filo["d1_dec"]
 filo["_ratio_pct_err"] = (filo["_ratio_check"] - filo["d9_d1_dec"]).abs() / filo["d9_d1_dec"] * 100
 bad_ratio_dec = filo[filo["_ratio_pct_err"] > 1.0]
 if bad_ratio_dec.empty:
-    print(f"  PASS (dec cols) — max discrepancy: {filo['_ratio_pct_err'].max():.4f}% ✓")
+    print(f"  PASS (dec cols), max discrepancy: {filo['_ratio_pct_err'].max():.4f}% ✓")
 else:
     violations["filo_l1"] += len(bad_ratio_dec)
-    print(f"  FAIL (dec) — {len(bad_ratio_dec)} mismatches:")
+    print(f"  FAIL (dec), {len(bad_ratio_dec)} mismatches:")
     print(bad_ratio_dec[["dep_code","year","d9_d1_dec","_ratio_pct_err"]].to_string(index=False))
 filo.drop(columns=["_ratio_check","_ratio_pct_err"], inplace=True)
 
@@ -122,10 +122,10 @@ print("\n[F4] Poverty rate bounds: 0 < poverty_rate_disp < 60")
 for col in ["poverty_rate_disp", "poverty_rate_dec"]:
     bad = filo[(filo[col] <= 0) | (filo[col] >= 60)]
     if bad.empty:
-        print(f"  {col}: PASS — all in (0,60) ✓  [range: {filo[col].min():.1f}–{filo[col].max():.1f}]")
+        print(f"  {col}: PASS, all in (0,60) ✓  [range: {filo[col].min():.1f}–{filo[col].max():.1f}]")
     else:
         violations["filo_l1"] += len(bad)
-        print(f"  {col}: FAIL — {len(bad)} rows outside (0,60):")
+        print(f"  {col}: FAIL, {len(bad)} rows outside (0,60):")
         print(bad[["dep_code","year",col]].to_string(index=False))
 
 # ── Check 5: Income composition sums ─────────────────────────────────────────
@@ -136,9 +136,9 @@ print(f"  Sum range: {filo['_pct_sum'].min():.1f} – {filo['_pct_sum'].max():.1
 print(f"  Mean sum: {filo['_pct_sum'].mean():.2f}  Std: {filo['_pct_sum'].std():.3f}")
 outside = filo[(filo["_pct_sum"] < 90) | (filo["_pct_sum"] > 110)]
 if outside.empty:
-    print(f"  PASS — all rows sum within 90–110 ✓")
+    print(f"  PASS, all rows sum within 90–110 ✓")
 else:
-    print(f"  FLAG — {len(outside)} rows outside 90–110 (may indicate partial coverage):")
+    print(f"  FLAG, {len(outside)} rows outside 90–110 (may indicate partial coverage):")
     print(outside[["dep_code","year","_pct_sum"] + pct_cols].head(10).to_string(index=False))
 filo.drop(columns=["_pct_sum"], inplace=True)
 
@@ -149,10 +149,10 @@ filo_sorted["_q2_pct_chg"] = filo_sorted.groupby("dep_code")["q2_disp"].pct_chan
 jumps = filo_sorted[filo_sorted["_q2_pct_chg"].abs() > 25].copy()
 if jumps.empty:
     max_jump = filo_sorted["_q2_pct_chg"].abs().max()
-    print(f"  PASS — no year-over-year jump > 25% ✓  (max observed: {max_jump:.2f}%)")
+    print(f"  PASS, no year-over-year jump > 25% ✓  (max observed: {max_jump:.2f}%)")
 else:
     violations["filo_l1"] += len(jumps)
-    print(f"  FAIL — {len(jumps)} jumps > 25%:")
+    print(f"  FAIL, {len(jumps)} jumps > 25%:")
     print(jumps[["dep_code","dep_name","year","q2_disp","_q2_pct_chg"]].to_string(index=False))
 
 print(f"\n{'─'*40}")
@@ -160,7 +160,7 @@ print(f"LAYER 1-A FILOSOFI TOTAL VIOLATIONS: {violations['filo_l1']}")
 print(f"{'─'*40}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LAYER 1-B — FIRMS STRUCTURAL INTEGRITY
+#  LAYER 1-B, FIRMS STRUCTURAL INTEGRITY
 # ══════════════════════════════════════════════════════════════════════════════
 section("LAYER 1-B  Firms structural integrity (960 rows)")
 
@@ -169,11 +169,11 @@ print("\n[FR1] Non-negativity: all creation counts >= 0")
 count_cols = [c for c in firms.columns if c.startswith("creations_") or c == "total_firm_creations"]
 neg = firms[(firms[count_cols] < 0).any(axis=1)]
 if neg.empty:
-    print(f"  PASS — no negative values in any of {len(count_cols)} columns ✓")
+    print(f"  PASS, no negative values in any of {len(count_cols)} columns ✓")
     print(f"  Minimum value across all count columns: {firms[count_cols].min().min():.0f}")
 else:
     violations["firms_l1"] += len(neg)
-    print(f"  FAIL — {len(neg)} rows contain negative values:")
+    print(f"  FAIL, {len(neg)} rows contain negative values:")
     print(neg.to_string(index=False))
 
 # ── Check 2: Legal-form component sum vs total ────────────────────────────────
@@ -186,10 +186,10 @@ print(f"  Gap (total − lf_sum): min={firms['_lf_gap'].min():.0f}  max={firms['
 print(f"  Gap as % of total:    min={firms['_lf_pct'].min():.3f}%  max={firms['_lf_pct'].max():.3f}%  mean={firms['_lf_pct'].mean():.3f}%")
 large = firms[firms["_lf_gap"].abs() > firms["total_firm_creations"] * 0.02]
 if large.empty:
-    print("  PASS — legal-form components sum within 2% of total for all rows ✓")
+    print("  PASS, legal-form components sum within 2% of total for all rows ✓")
 else:
     violations["firms_l1"] += len(large)
-    print(f"  FLAG — {len(large)} rows with >2% gap:")
+    print(f"  FLAG, {len(large)} rows with >2% gap:")
     print(large[["dep_code","year","total_firm_creations","_lf_sum","_lf_gap"]].head(10).to_string(index=False))
 firms.drop(columns=["_lf_sum","_lf_gap","_lf_pct"], inplace=True)
 
@@ -207,10 +207,10 @@ print("  Largest sector gaps (top 5 by absolute gap):")
 print(worst_sec.to_string(index=False))
 large_sec = firms[firms["_sec_gap"].abs() > firms["total_firm_creations"] * 0.02]
 if large_sec.empty:
-    print("  PASS — sector components sum within 2% of total for all rows ✓")
+    print("  PASS, sector components sum within 2% of total for all rows ✓")
 else:
     violations["firms_l1"] += len(large_sec)
-    print(f"  FLAG — {len(large_sec)} rows with >2% gap (may reflect agriculture excluded from A21)")
+    print(f"  FLAG, {len(large_sec)} rows with >2% gap (may reflect agriculture excluded from A21)")
 firms.drop(columns=["_sec_sum","_sec_gap","_sec_pct"], inplace=True)
 
 # ── Check 4: YoY stability ────────────────────────────────────────────────────
@@ -220,9 +220,9 @@ firms_sorted["_fc_pct_chg"] = firms_sorted.groupby("dep_code")["total_firm_creat
 jumps_f = firms_sorted[firms_sorted["_fc_pct_chg"].abs() > 60].copy()
 if jumps_f.empty:
     max_j = firms_sorted["_fc_pct_chg"].abs().max()
-    print(f"  PASS — no jump > 60% ✓  (max observed: {max_j:.1f}%)")
+    print(f"  PASS, no jump > 60% ✓  (max observed: {max_j:.1f}%)")
 else:
-    print(f"  NOTE — {len(jumps_f)} jumps > 60% (checking whether these are 2021 COVID bounce or alignment errors):")
+    print(f"  NOTE, {len(jumps_f)} jumps > 60% (checking whether these are 2021 COVID bounce or alignment errors):")
     print(jumps_f[["dep_code","year","total_firm_creations","_fc_pct_chg"]].to_string(index=False))
 
 # ── Check 5: Rank stability for dep 75 and dep 48 ────────────────────────────
@@ -250,19 +250,19 @@ for r in rank_table:
 
 anom = [r for r in rank_table if r["flag75"] or r["flag48"]]
 if not anom:
-    print("  PASS — Paris always top-5, Lozère always bottom-10 across all 10 years ✓")
+    print("  PASS, Paris always top-5, Lozère always bottom-10 across all 10 years ✓")
 else:
     violations["firms_l1"] += len(anom)
-    print(f"  FAIL — {len(anom)} year(s) with rank anomalies (see *** above)")
+    print(f"  FAIL, {len(anom)} year(s) with rank anomalies (see *** above)")
 
 print(f"\n{'─'*40}")
 print(f"LAYER 1-B FIRMS TOTAL VIOLATIONS: {violations['firms_l1']}")
 print(f"{'─'*40}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LAYER 2-A — FILOSOFI 15 random cells
+#  LAYER 2-A, FILOSOFI 15 random cells
 # ══════════════════════════════════════════════════════════════════════════════
-section("LAYER 2-A  Filosofi — 15 random cells (seed=123)")
+section("LAYER 2-A  Filosofi, 15 random cells (seed=123)")
 
 print("""
 NOTE: Raw Filosofi per-year source files were deleted after previous internal
@@ -282,9 +282,9 @@ for dep, yr in sorted(filo_sample, key=lambda x: (x[0], x[1])):
     print(f"  {dep:>4} {row['dep_name']:<22} {yr:>4} | {row['q2_disp']:>8,.0f} | {row['gini_disp']:>9.3f} | {row['poverty_rate_disp']:>9.1f}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LAYER 2-B — FIRMS 15 random cells vs raw ZIP
+#  LAYER 2-B, FIRMS 15 random cells vs raw ZIP
 # ══════════════════════════════════════════════════════════════════════════════
-section("LAYER 2-B  Firms — 15 random cells vs raw ZIP (seed=123)")
+section("LAYER 2-B  Firms, 15 random cells vs raw ZIP (seed=123)")
 
 random.seed(123)
 firms_combos = list(zip(firms["dep_code"], firms["year"]))
@@ -354,4 +354,4 @@ if violations["filo_l1"] == 0 and violations["firms_l1"] == 0 and matched == 15:
     print("  PRELIMINARY VERDICT: ✓ No structural issues found.")
     print("  Awaiting Layer 3 web anchors for absolute-value confirmation.")
 else:
-    print("  ⚠ ISSUES FOUND — see details above before proceeding to analysis.")
+    print("  ⚠ ISSUES FOUND, see details above before proceeding to analysis.")

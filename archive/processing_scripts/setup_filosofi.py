@@ -1,5 +1,5 @@
 """
-Régions Inégales — Filosofi Data Setup
+Régions Inégales, Filosofi Data Setup
 Tasks: extract ZIPs, inspect structure, assess CSV conversion, report join keys.
 """
 
@@ -24,10 +24,10 @@ def extract_year(filename):
 
 
 # ---------------------------------------------------------------------------
-# Task 1 — Extract all ZIPs into annee_YYYY subfolders
+# Task 1, Extract all ZIPs into annee_YYYY subfolders
 # ---------------------------------------------------------------------------
 print("=" * 70)
-print("TASK 1 — Extracting ZIPs into year subfolders")
+print("TASK 1, Extracting ZIPs into year subfolders")
 print("=" * 70)
 
 zip_files = sorted(BASE_DIR.glob("*.zip"))
@@ -36,7 +36,7 @@ extracted_years = {}
 for zf in zip_files:
     year = extract_year(zf.name)
     if not year:
-        print(f"  WARNING: Could not detect year for {zf.name} — skipping")
+        print(f"  WARNING: Could not detect year for {zf.name}, skipping")
         continue
 
     target_dir = BASE_DIR / f"annee_{year}"
@@ -54,10 +54,10 @@ print()
 
 
 # ---------------------------------------------------------------------------
-# Task 2 & 3 — Inspect + assess conversion feasibility
+# Task 2 & 3, Inspect + assess conversion feasibility
 # ---------------------------------------------------------------------------
 print("=" * 70)
-print("TASKS 2 & 3 — Structural inspection + CSV conversion assessment")
+print("TASKS 2 & 3, Structural inspection + CSV conversion assessment")
 print("=" * 70)
 
 # Collect join-key info for final summary
@@ -110,7 +110,7 @@ def inspect_excel(filepath, year):
         sheets = wb.sheetnames
         result["sheets"] = sheets
         result["sheet_count"] = len(sheets)
-        result["safe_to_convert"] = "safe — 1 sheet" if len(sheets) == 1 else f"multi-sheet ({len(sheets)} sheets) — needs manual decision"
+        result["safe_to_convert"] = "safe, 1 sheet" if len(sheets) == 1 else f"multi-sheet ({len(sheets)} sheets), needs manual decision"
         wb.close()
 
         # Read with pandas for column + row info (first sheet)
@@ -123,7 +123,7 @@ def inspect_excel(filepath, year):
 
     except Exception as e:
         result["error"] = str(e)
-        result["safe_to_convert"] = "ERROR — could not open"
+        result["safe_to_convert"] = "ERROR, could not open"
     return result
 
 
@@ -165,7 +165,7 @@ for year in sorted(extracted_years.keys()):
             print(f"    Sheets    : {r['sheets']}")
         print(f"    Columns   : {r.get('columns', 'N/A')}")
         print(f"    Total rows: {r.get('total_rows', 'N/A')}")
-        print(f"    Join key  : {r.get('join_key', '⚠ not found — check manually')}")
+        print(f"    Join key  : {r.get('join_key', '⚠ not found, check manually')}")
         print(f"    Conversion: {r.get('safe_to_convert', 'N/A')}")
         print(f"    Sample ({SAMPLE_ROWS} rows):")
         sample_text = r.get("sample", "N/A")
@@ -183,13 +183,13 @@ for year in sorted(extracted_years.keys()):
 # Final summary: join keys + conversion
 # ---------------------------------------------------------------------------
 print("\n" + "=" * 70)
-print("SUMMARY — Join key consistency across years")
+print("SUMMARY, Join key consistency across years")
 print("=" * 70)
 for year in sorted(join_key_summary.keys()):
     print(f"  {year}:  {join_key_summary[year]}")
 
 print("\n" + "=" * 70)
-print("SUMMARY — CSV conversion assessment")
+print("SUMMARY, CSV conversion assessment")
 print("=" * 70)
 for year in sorted(conversion_report.keys()):
     print(f"\n  {year}:")

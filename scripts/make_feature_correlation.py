@@ -41,7 +41,7 @@ LABELS = [
     "Poverty rate",
     "Gini",
     "Wage share",
-    "Firm rate",          # target — kept last
+    "Firm rate",          # target, kept last
 ]
 
 # ── Data ──────────────────────────────────────────────────────────────────────

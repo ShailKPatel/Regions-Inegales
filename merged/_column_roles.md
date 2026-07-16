@@ -1,4 +1,4 @@
-# Column Roles — france_panel_master.csv (960 × 51)
+# Column Roles, france_panel_master.csv (960 × 51)
 
 Generated: 2026-07-16  
 Source file covers: 96 French departments × 10 years (2012–2021)
@@ -25,18 +25,18 @@ Model panel: 960 rows (2012–2021)
 | d1_dec | CANDIDATE FEATURE | float64 | 1st decile, declared |
 | d9_dec | CANDIDATE FEATURE | float64 | 9th decile, declared |
 | gini_dec | CANDIDATE FEATURE | float64 | Gini, declared; r=0.937 with gini_disp |
-| s80s20_dec | CANDIDATE FEATURE | float64 | S80/S20 ratio, declared; r=0.986 with d9_d1_dec — near-duplicate |
-| d9_d1_dec | CANDIDATE FEATURE | float64 | D9/D1 ratio, declared; r=0.986 with s80s20_dec — near-duplicate |
+| s80s20_dec | CANDIDATE FEATURE | float64 | S80/S20 ratio, declared; r=0.986 with d9_d1_dec, near-duplicate |
+| d9_d1_dec | CANDIDATE FEATURE | float64 | D9/D1 ratio, declared; r=0.986 with s80s20_dec, near-duplicate |
 | q1_disp | CANDIDATE FEATURE | float64 | 1st quartile, disposable income |
 | q2_disp | CANDIDATE FEATURE | float64 | Median, disposable |
 | q3_disp | CANDIDATE FEATURE | float64 | 3rd quartile, disposable; r=0.981 with d9_disp |
 | d1_disp | CANDIDATE FEATURE | float64 | 1st decile, disposable |
 | d9_disp | CANDIDATE FEATURE | float64 | 9th decile, disposable |
 | gini_disp | CANDIDATE FEATURE | float64 | Gini, disposable; r=0.978 with d9_d1_disp, r=0.978 with s80s20_disp |
-| s80s20_disp | CANDIDATE FEATURE | float64 | S80/S20 ratio, disposable; r=0.986 with d9_d1_disp — near-duplicate |
-| d9_d1_disp | CANDIDATE FEATURE | float64 | D9/D1 ratio, disposable; r=0.986 with s80s20_disp — near-duplicate |
+| s80s20_disp | CANDIDATE FEATURE | float64 | S80/S20 ratio, disposable; r=0.986 with d9_d1_disp, near-duplicate |
+| d9_d1_disp | CANDIDATE FEATURE | float64 | D9/D1 ratio, disposable; r=0.986 with s80s20_disp, near-duplicate |
 | poverty_rate_disp | CANDIDATE FEATURE | float64 | % below 60% median, disposable; 960 non-null |
-| poverty_rate_dec | CANDIDATE FEATURE | float64 | % below 60% median, declared; 96 nulls (all 2012) — expected |
+| poverty_rate_dec | CANDIDATE FEATURE | float64 | % below 60% median, declared; 96 nulls (all 2012), expected |
 | pct_wages | CANDIDATE FEATURE | float64 | % of income from wages; Σ pct_* = 100 ± 0.1 confirmed |
 | pct_unemployment | CANDIDATE FEATURE | float64 | % of income from unemployment benefits; r=0.792 with unemployment_rate |
 | pct_capital_gains | CANDIDATE FEATURE | float64 | % of income from capital |

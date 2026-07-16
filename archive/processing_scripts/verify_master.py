@@ -1,5 +1,5 @@
 """
-Master panel verification — doubled checks.
+Master panel verification, doubled checks.
 Layers 1, 2, 3 as specified, with 2× the original check count.
 Run with:  python verify_master.py
 """
@@ -28,13 +28,13 @@ FIRMS_COLS = [
 ]
 
 print("=" * 70)
-print("LAYER 1 — MERGE INTEGRITY (8 checks, 2× original)")
+print("LAYER 1, MERGE INTEGRITY (8 checks, 2× original)")
 print("=" * 70)
 
 # ── CHECK 1: Shape ──────────────────────────────────────────────────────────
 n_rows, n_cols = df.shape
 fail = n_rows != 960
-print(f"\nCHECK 1 — Row count: {n_rows}  ({'PASS' if not fail else 'FAIL — expected 960'})")
+print(f"\nCHECK 1, Row count: {n_rows}  ({'PASS' if not fail else 'FAIL, expected 960'})")
 
 # ── CHECK 2: Key uniqueness & leading zeros ─────────────────────────────────
 n_unique_dep  = df["dep_code"].nunique()
@@ -44,26 +44,26 @@ leading_zeros = (df["dep_code"].str.len() == 2).all()
 year_range_ok = (df["year"].min() == 2012) and (df["year"].max() == 2021)
 year_vals     = sorted(df["year"].unique())
 
-print(f"\nCHECK 2 — Key integrity:")
+print(f"\nCHECK 2, Key integrity:")
 print(f"  Unique dep_codes : {n_unique_dep}  {'PASS' if n_unique_dep==96 else 'FAIL expected 96'}")
 print(f"  Unique years     : {n_unique_year} {year_vals}  {'PASS' if n_unique_year==10 else 'FAIL'}")
 print(f"  Year range 2012-2021: {'PASS' if year_range_ok else 'FAIL'}")
 print(f"  Duplicate (dep,year) pairs: {dup_keys}  {'PASS' if dup_keys==0 else 'FAIL'}")
-print(f"  All dep_codes 2-char strings: {'PASS' if leading_zeros else 'FAIL — some have wrong length'}")
+print(f"  All dep_codes 2-char strings: {'PASS' if leading_zeros else 'FAIL, some have wrong length'}")
 
 # ── CHECK 3: No all-null rows from outer-join mismatch ──────────────────────
 all_filosofi_null = df[FILOSOFI_COLS].isnull().all(axis=1).sum()
 all_firms_null    = df[FIRMS_COLS].isnull().all(axis=1).sum()
-print(f"\nCHECK 3 — All-null side rows (outer-join ghost rows):")
+print(f"\nCHECK 3, All-null side rows (outer-join ghost rows):")
 print(f"  Rows where ALL Filosofi cols null: {all_filosofi_null}  {'PASS' if all_filosofi_null==0 else 'FAIL'}")
 print(f"  Rows where ALL Firms cols null   : {all_firms_null}  {'PASS' if all_firms_null==0 else 'FAIL'}")
 
 # ── CHECK 4: Cross-source correlation (income ↔ firms) ─────────────────────
 valid = df[["q2_disp", "total_firm_creations"]].dropna()
 corr = valid["q2_disp"].corr(valid["total_firm_creations"])
-print(f"\nCHECK 4 — Income↔Firms correlation (should be clearly POSITIVE):")
+print(f"\nCHECK 4, Income↔Firms correlation (should be clearly POSITIVE):")
 print(f"  Pearson r(q2_disp, total_firm_creations) = {corr:.4f}  "
-      f"{'PASS — positive' if corr > 0.3 else 'WARN — low/negative, check merge'}")
+      f"{'PASS, positive' if corr > 0.3 else 'WARN, low/negative, check merge'}")
 
 # ── CHECK 5: Population-normalised correlation ──────────────────────────────
 # Per-capita firms vs income: should also be positive (but weaker, Paris is outlier)
@@ -71,12 +71,12 @@ valid2 = df[["q2_disp", "total_firm_creations", "n_persons"]].dropna()
 valid2 = valid2[valid2["n_persons"] > 0].copy()
 valid2["firms_per_1k"] = valid2["total_firm_creations"] / valid2["n_persons"] * 1000
 corr2 = valid2["q2_disp"].corr(valid2["firms_per_1k"])
-print(f"\nCHECK 5 — Income↔Firms-per-1000-persons correlation:")
+print(f"\nCHECK 5, Income↔Firms-per-1000-persons correlation:")
 print(f"  Pearson r = {corr2:.4f}  "
-      f"('PASS — positive' if corr2 > 0.0 else 'WARN — negative')")
+      f"('PASS, positive' if corr2 > 0.0 else 'WARN, negative')")
 
 # ── CHECK 6: Spot-pairing check (7 departments) ────────────────────────────
-print(f"\nCHECK 6 — Spot-pairings (7 departments, any year)")
+print(f"\nCHECK 6, Spot-pairings (7 departments, any year)")
 SPOTS = [
     ("75", "Paris",           "high income, high firms"),
     ("93", "Seine-Saint-Denis","low income, high firms (populous)"),
@@ -104,26 +104,26 @@ yearly_median = df.groupby("year")["q2_disp"].median()
 diffs = yearly_median.diff().dropna()
 n_up   = (diffs > 0).sum()
 n_down = (diffs < 0).sum()
-print(f"\nCHECK 7 — National median income trend (should mostly rise 2012-2021):")
+print(f"\nCHECK 7, National median income trend (should mostly rise 2012-2021):")
 for yr, val in yearly_median.items():
     print(f"  {yr}: {val:9.0f} €")
 print(f"  Year-on-year: {n_up} up, {n_down} down  "
-      f"{'PASS' if n_up >= 6 else 'WARN — unusual downturn pattern'}")
+      f"{'PASS' if n_up >= 6 else 'WARN, unusual downturn pattern'}")
 
 # ── CHECK 8: Internal additivity of firm sub-categories ───────────────────
 # total_firm_creations should equal sum of creations_individual + sarl + sas + other
-# (not necessarily exact — rounding/reclassification OK, but check magnitude)
+# (not necessarily exact, rounding/reclassification OK, but check magnitude)
 sub_sum = df[["creations_individual","creations_sarl","creations_sas","creations_other_legal"]].sum(axis=1)
 diff = (df["total_firm_creations"] - sub_sum).abs()
 mean_diff_pct = (diff / df["total_firm_creations"].replace(0, np.nan)).mean() * 100
 big_discrepancies = (diff > df["total_firm_creations"] * 0.05).sum()
-print(f"\nCHECK 8 — Firm sub-category additivity (total ≈ sum of legal forms):")
+print(f"\nCHECK 8, Firm sub-category additivity (total ≈ sum of legal forms):")
 print(f"  Mean absolute discrepancy: {mean_diff_pct:.2f}%  (warn if >5%)")
 print(f"  Rows with >5% gap        : {big_discrepancies}")
 if big_discrepancies == 0:
-    print("  PASS — legal-form sub-totals add up cleanly")
+    print("  PASS, legal-form sub-totals add up cleanly")
 else:
-    print("  WARN — some rows have >5% discrepancy in sub-totals")
+    print("  WARN, some rows have >5% discrepancy in sub-totals")
 
 print("\n" + "=" * 70)
 print("LAYER 1 SUMMARY")
@@ -139,11 +139,11 @@ l1_pass = (
     all_firms_null == 0 and
     corr > 0.3
 )
-print("MERGE INTEGRITY CONFIRMED — no row misalignment." if l1_pass else "ISSUE FOUND — see check failures above.")
+print("MERGE INTEGRITY CONFIRMED, no row misalignment." if l1_pass else "ISSUE FOUND, see check failures above.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 print("\n" + "=" * 70)
-print("LAYER 2 — 30 RANDOM CELLS (web verification candidates)")
+print("LAYER 2, 30 RANDOM CELLS (web verification candidates)")
 print("=" * 70)
 
 random.seed(2024)
@@ -170,7 +170,7 @@ for c in cells_2021:
 
 # ═══════════════════════════════════════════════════════════════════════════
 print("\n" + "=" * 70)
-print("LAYER 3 — NATIONAL FIRM TOTALS BY YEAR (master vs published)")
+print("LAYER 3, NATIONAL FIRM TOTALS BY YEAR (master vs published)")
 print("=" * 70)
 
 nat_totals = df.groupby("year")["total_firm_creations"].sum().sort_index()
@@ -179,7 +179,7 @@ print("-" * 22)
 for yr, tot in nat_totals.items():
     print(f"{yr:4d} | {int(tot):>12,}")
 
-print("\n[Now run web searches for published national totals — see below]")
+print("\n[Now run web searches for published national totals, see below]")
 print("Target queries:")
 for yr in [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]:
     print(f"  {yr}: créations entreprises France {yr} nombre insee")

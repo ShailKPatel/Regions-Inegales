@@ -25,7 +25,7 @@ def abort(msg):
     sys.exit(1)
 
 # ---------------------------------------------------------------------------
-# STEP 0 — Backup
+# STEP 0, Backup
 # ---------------------------------------------------------------------------
 print("=== STEP 0: Backup ===")
 shutil.copy2(MASTER, BACKUP)
@@ -42,7 +42,7 @@ master["dep_code"]  = master["dep_code"].str.strip().str.strip('"')
 density["dep_code"] = density["dep_code"].str.strip().str.strip('"')
 
 # ---------------------------------------------------------------------------
-# STEP 0b — Clamp floating-point near-100 artifacts
+# STEP 0b, Clamp floating-point near-100 artifacts
 # ---------------------------------------------------------------------------
 print("\n=== STEP 0b: Clamp pct_urban ≈ 100 ===")
 mask_near100 = (density["pct_urban"] > 100 - 1e-9) & (density["pct_urban"] < 100)
@@ -60,7 +60,7 @@ if over100.any():
     abort(f"pct_urban > 100 in {density.loc[over100, 'dep_code'].tolist()}")
 
 # ---------------------------------------------------------------------------
-# STEP 1 — Assert both input files
+# STEP 1, Assert both input files
 # ---------------------------------------------------------------------------
 print("\n=== STEP 1: Assertions ===")
 
@@ -75,13 +75,13 @@ def assert_file(df, label, expected_rows, expected_cols):
         abort(f"{label}: {dups.sum()} duplicate (dep_code, year) pairs")
     deps = df["dep_code"].unique()
     if len(deps) != EXPECTED_DEPS:
-        abort(f"{label}: expected {EXPECTED_DEPS} deps, got {len(deps)} — missing: {sorted(set(['2A','2B']) - set(deps))}")
+        abort(f"{label}: expected {EXPECTED_DEPS} deps, got {len(deps)}, missing: {sorted(set(['2A','2B']) - set(deps))}")
     for d in ["2A", "2B"]:
         if d not in deps:
             abort(f"{label}: missing dep {d}")
     years = sorted(df["year"].unique())
     if years != EXPECTED_YEARS:
-        abort(f"{label}: years mismatch — got {years}")
+        abort(f"{label}: years mismatch, got {years}")
     nulls = df["pct_urban"].isnull().sum() if "pct_urban" in df.columns else 0
     print(f"  {label}: {rows}×{cols}  |  {len(deps)} deps  |  dup keys=0  |  2A/2B present  |  pct_urban nulls={nulls}   OK")
 
@@ -89,7 +89,7 @@ assert_file(master,  "master",  EXPECTED_MASTER_ROWS, EXPECTED_MASTER_COLS)
 assert_file(density, "density", EXPECTED_MASTER_ROWS, 5)
 
 # ---------------------------------------------------------------------------
-# STEP 2 — Merge
+# STEP 2, Merge
 # ---------------------------------------------------------------------------
 print("\n=== STEP 2: Merge ===")
 
@@ -137,7 +137,7 @@ print(f"  Ghost rows:       0   OK")
 print(f"  Rows/year:       {EXPECTED_DEPS}   OK")
 
 # ---------------------------------------------------------------------------
-# STEP 3 — Integrity checks
+# STEP 3, Integrity checks
 # ---------------------------------------------------------------------------
 print("\n=== STEP 3: Integrity ===")
 
@@ -158,7 +158,7 @@ print("  Spot checks:")
 for dep, yr, col, expected, tol in spots:
     val = cell(merged, dep, yr, col)
     ok  = val is not None and abs(float(val) - expected) <= tol
-    status = "OK" if ok else f"FAIL — expected {expected}, got {val}"
+    status = "OK" if ok else f"FAIL, expected {expected}, got {val}"
     print(f"    ({dep},{yr}) {col} = {val}   {status}")
     if not ok:
         abort(f"Spot check failed: ({dep},{yr}) {col}")
@@ -177,13 +177,13 @@ for cls, exp in [("urban", 140), ("intermediate", 310), ("rural", 510)]:
 print(f"\n  Correlations with pct_urban:")
 for col in ["doctor_density_per_100k", "edu_share_sup", "q2_disp"]:
     r = merged["pct_urban"].corr(merged[col])
-    direction = "positive" if r > 0 else "NEGATIVE — unexpected"
+    direction = "positive" if r > 0 else "NEGATIVE, unexpected"
     print(f"    pct_urban ↔ {col}: r = {r:.4f}   ({direction})")
 
 print("\n  All integrity checks passed   OK")
 
 # ---------------------------------------------------------------------------
-# STEP 4 — Write master
+# STEP 4, Write master
 # ---------------------------------------------------------------------------
 print("\n=== STEP 4: Write master ===")
 merged.to_csv(MASTER, sep=";", index=False)

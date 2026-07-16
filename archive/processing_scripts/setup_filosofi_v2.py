@@ -58,7 +58,7 @@ def inspect_xls(filepath):
         sheets = wb.sheet_names()
         result["sheets"] = sheets
         result["sheet_count"] = len(sheets)
-        result["safe_to_convert"] = "safe — 1 sheet" if len(sheets) == 1 else f"multi-sheet ({len(sheets)}) — needs manual decision"
+        result["safe_to_convert"] = "safe, 1 sheet" if len(sheets) == 1 else f"multi-sheet ({len(sheets)}), needs manual decision"
 
         df = pd.read_excel(filepath, sheet_name=0, engine="xlrd", dtype=str)
         result["columns"] = list(df.columns)
@@ -67,7 +67,7 @@ def inspect_xls(filepath):
         result["join_key"] = detect_join_key(df.columns)
     except Exception as e:
         result["error"] = str(e)
-        result["safe_to_convert"] = "ERROR — could not open"
+        result["safe_to_convert"] = "ERROR, could not open"
     return result
 
 def inspect_xlsx(filepath):
@@ -78,7 +78,7 @@ def inspect_xlsx(filepath):
         sheets = wb.sheetnames
         result["sheets"] = sheets
         result["sheet_count"] = len(sheets)
-        result["safe_to_convert"] = "safe — 1 sheet" if len(sheets) == 1 else f"multi-sheet ({len(sheets)}) — needs manual decision"
+        result["safe_to_convert"] = "safe, 1 sheet" if len(sheets) == 1 else f"multi-sheet ({len(sheets)}), needs manual decision"
         wb.close()
 
         df = pd.read_excel(filepath, sheet_name=0, engine="openpyxl", dtype=str)
@@ -88,15 +88,15 @@ def inspect_xlsx(filepath):
         result["join_key"] = detect_join_key(df.columns)
     except Exception as e:
         result["error"] = str(e)
-        result["safe_to_convert"] = "ERROR — could not open"
+        result["safe_to_convert"] = "ERROR, could not open"
     return result
 
 
 # ---------------------------------------------------------------------------
-# Task 1b — Extract nested ZIPs for years 2012, 2014, 2015
+# Task 1b, Extract nested ZIPs for years 2012, 2014, 2015
 # ---------------------------------------------------------------------------
 print("=" * 70)
-print("TASK 1b — Extracting nested ZIPs (2012, 2014, 2015)")
+print("TASK 1b, Extracting nested ZIPs (2012, 2014, 2015)")
 print("=" * 70)
 
 for year in ["2012", "2014", "2015"]:
@@ -119,10 +119,10 @@ for year in ["2012", "2014", "2015"]:
 print()
 
 # ---------------------------------------------------------------------------
-# Task 2 & 3 — Inspect all years
+# Task 2 & 3, Inspect all years
 # ---------------------------------------------------------------------------
 print("=" * 70)
-print("TASKS 2 & 3 — Structural inspection + CSV conversion assessment")
+print("TASKS 2 & 3, Structural inspection + CSV conversion assessment")
 print("=" * 70)
 
 all_years = sorted([d.name.replace("annee_", "") for d in BASE_DIR.iterdir()
@@ -133,14 +133,14 @@ conversion_report = {}
 
 # Also flag 2013 immediately
 print(f"\n{'─' * 60}")
-print(f"  YEAR 2013  — ⚠ ZIP CORRUPTED")
+print(f"  YEAR 2013 , ⚠ ZIP CORRUPTED")
 print(f"{'─' * 60}")
 print(f"  ERROR: indic-struct-distrib-revenu-2013-SUPRA.zip is not a valid ZIP file.")
 print(f"  ACTION NEEDED: Please re-download the 2013 file from:")
 print(f"    https://www.insee.fr/fr/statistiques/2388413")
-join_key_summary["2013"] = {"⚠ MISSING — ZIP corrupted, must re-download"}
+join_key_summary["2013"] = {"⚠ MISSING, ZIP corrupted, must re-download"}
 conversion_report["2013"] = [{"file": "indic-struct-distrib-revenu-2013-SUPRA.zip",
-                               "type": "N/A", "safe_to_convert": "⚠ MISSING — ZIP corrupted"}]
+                               "type": "N/A", "safe_to_convert": "⚠ MISSING, ZIP corrupted"}]
 
 for year in all_years:
     folder = BASE_DIR / f"annee_{year}"
@@ -194,7 +194,7 @@ for year in all_years:
         print(f"    Columns   : {r.get('columns', 'N/A')}")
         print(f"    Total rows: {r.get('total_rows', 'N/A')}")
         jk = r.get('join_key')
-        print(f"    Join key  : {jk if jk else '⚠ not found — check manually'}")
+        print(f"    Join key  : {jk if jk else '⚠ not found, check manually'}")
         print(f"    Conversion: {r.get('safe_to_convert', 'N/A')}")
         print(f"    Sample ({SAMPLE_ROWS} rows):")
         for line in r.get("sample", "N/A").splitlines():
@@ -209,9 +209,9 @@ for year in all_years:
             if f.suffix.lower() == ".csv":
                 year_results.append({"file": f.name, "type": "CSV", "safe_to_convert": "already CSV"})
             elif f.suffix.lower() == ".xls":
-                year_results.append({"file": f.name, "type": "XLS", "safe_to_convert": "pending — needs xlrd check"})
+                year_results.append({"file": f.name, "type": "XLS", "safe_to_convert": "pending, needs xlrd check"})
             else:
-                year_results.append({"file": f.name, "type": "XLSX", "safe_to_convert": "pending — not inspected"})
+                year_results.append({"file": f.name, "type": "XLSX", "safe_to_convert": "pending, not inspected"})
 
     conversion_report[year] = year_results
     join_key_summary[year] = year_join_keys if year_join_keys else {"⚠ NOT FOUND"}
@@ -221,13 +221,13 @@ for year in all_years:
 # Summaries
 # ---------------------------------------------------------------------------
 print("\n" + "=" * 70)
-print("SUMMARY — Join key by year")
+print("SUMMARY, Join key by year")
 print("=" * 70)
 for year in sorted(join_key_summary.keys()):
     print(f"  {year}:  {join_key_summary[year]}")
 
 print("\n" + "=" * 70)
-print("SUMMARY — CSV conversion assessment (DEP-level files only for 2018+)")
+print("SUMMARY, CSV conversion assessment (DEP-level files only for 2018+)")
 print("=" * 70)
 for year in sorted(conversion_report.keys()):
     dep_results = [r for r in conversion_report[year] if "_DEP" in r["file"].upper() or "MISSING" in r.get("safe_to_convert","")]

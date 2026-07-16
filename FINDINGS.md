@@ -293,11 +293,11 @@ Group totals: Structural 59%, Economic 30%, Social 10%.
 ### Key OLS findings (department-clustered SE)
 
 - marriage_rate: +0.43, p = 0.0009 (strong positive, robust to weighting)
-- q2_disp (median income): -0.0006, p < 0.001 (negative — demographic transition:
+- q2_disp (median income): -0.0006, p < 0.001 (negative, demographic transition:
   richer departments have fewer births per capita)
-- pct_urban: +0.08, p < 0.001 (positive — urban departments have higher birth rates,
+- pct_urban: +0.08, p < 0.001 (positive, urban departments have higher birth rates,
   likely driven by younger population structure and immigration in IDF and major cities)
-- edu_share_sup: +0.13, p < 0.001 (positive — OLS runs counter to SHAP rank,
+- edu_share_sup: +0.13, p < 0.001 (positive, OLS runs counter to SHAP rank,
   possibly via age structure confounding)
 - unemployment_rate: -0.05, p = 0.63 (not significant)
 
@@ -309,7 +309,7 @@ Marriage rate is the strongest individually interpretable social predictor (OLS 
 Income is negative after conditioning on urbanisation, consistent with the demographic
 transition: higher-income departments have lower fertility once urban effects are removed.
 Unemployment is again the weakest predictor (ranked 6/8 by SHAP) and is not
-significant in OLS — a parallel to the firm-rate model's finding.
+significant in OLS, a parallel to the firm-rate model's finding.
 
 Figures generated: figures/birth_grouped_shap_bar.png, figures/birth_shap_beeswarm.png,
 figures/birth_shap_dependence_marriage.png.

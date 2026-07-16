@@ -102,7 +102,7 @@ nulls = df.isnull().sum()
 missing = nulls[nulls > 0]
 print("\nMissing values:")
 print(missing.to_string() if not missing.empty else "  None")
-print("(poverty_rate_dec: 96 nulls in 2012 are structural — declared-income Pauvres file unavailable for 2012)")
+print("(poverty_rate_dec: 96 nulls in 2012 are structural, declared-income Pauvres file unavailable for 2012)")
 print()
 print(df.head(3).to_string())
 

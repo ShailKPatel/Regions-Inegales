@@ -1,5 +1,5 @@
 """
-Dataset 5 — Education: snapshot panel builder (3 census years, no interpolation).
+Dataset 5, Education: snapshot panel builder (3 census years, no interpolation).
 Source: base-cc-diplomes-formation-2022.CSV (INSEE, Diplômes-Formation 2022 edition,
 rolling censuses 2010/2015/2022 → reference years 2011/2016/2022).
 """
@@ -13,7 +13,7 @@ DATA_SOURCES = "DATA_SOURCES.md"
 
 DOM_CODES = {"971", "972", "973", "974", "976"}
 
-# ── TASK 1 — load, derive dep_code, filter metro ──────────────────────────────
+# ── TASK 1, load, derive dep_code, filter metro ──────────────────────────────
 
 df = pd.read_csv(RAW, sep=";", encoding="latin-1", dtype={"CODGEO": str})
 print(f"Raw communes loaded: {len(df):,} rows × {df.shape[1]} cols")
@@ -39,18 +39,18 @@ df_metro = df[~df["dep_code"].isin(DOM_CODES)].copy()
 metro_deps = sorted(df_metro["dep_code"].unique())
 print(f"\nMetro unique dep_codes after filter: {len(metro_deps)}")
 if len(metro_deps) != 96:
-    print(f"  WARNING — expected 96, got {len(metro_deps)}")
+    print(f"  WARNING, expected 96, got {len(metro_deps)}")
     missing = [f"{i:02d}" for i in range(1, 96) if f"{i:02d}" not in metro_deps
                and str(i) not in metro_deps] + \
               ([] if "2A" in metro_deps else ["2A"]) + \
               ([] if "2B" in metro_deps else ["2B"])
     print(f"  Possibly missing: {missing}")
 else:
-    print("  OK — exactly 96 metro departments")
+    print("  OK, exactly 96 metro departments")
 
 print(f"  List: {metro_deps}")
 
-# ── TASK 2 — higher-ed share per department per snapshot year ─────────────────
+# ── TASK 2, higher-ed share per department per snapshot year ─────────────────
 
 years_config = {
     2022: {
@@ -94,7 +94,7 @@ for yr, cfg in years_config.items():
     for dep, row in share.items():
         snap_records.append({"dep_code": dep, "year": yr, "edu_share_sup": row})
 
-# ── TASK 3 — Cantal coverage check ───────────────────────────────────────────
+# ── TASK 3, Cantal coverage check ───────────────────────────────────────────
 
 cantal = df_metro[df_metro["dep_code"] == "15"].copy()
 cantal["P22_NSCOL15P"] = pd.to_numeric(cantal["P22_NSCOL15P"], errors="coerce")
@@ -116,7 +116,7 @@ print(f"  Blank communes partial data (any year):\n{partial.to_string(index=Fals
 print(f"  => Suppressed communes have no recoverable pop data in this file.")
 print(f"     Combined population is unquantifiable from this source; flag for web-anchor.")
 
-# ── TASK 4 — shape + internal checks ─────────────────────────────────────────
+# ── TASK 4, shape + internal checks ─────────────────────────────────────────
 
 panel = pd.DataFrame(snap_records)
 panel["dep_code"] = panel["dep_code"].astype(str)
@@ -141,7 +141,7 @@ out_of_bounds = panel[(panel["edu_share_sup"] < 10) | (panel["edu_share_sup"] > 
 if len(out_of_bounds):
     print(f"  OUT-OF-BOUNDS rows:\n{out_of_bounds.to_string()}")
 else:
-    print(f"  All shares in [10, 70]% — OK")
+    print(f"  All shares in [10, 70]%, OK")
 
 # Per-year min/max
 for yr in [2011, 2016, 2022]:
@@ -208,7 +208,7 @@ for codgeo, (label, expected_dep) in SPOT_COMMUNES.items():
           f"panel_value={panel_share}%  "
           f"{'OK' if abs(dep_share - panel_share) < 0.01 else 'MISMATCH'}")
 
-# ── TASK 5 — output ───────────────────────────────────────────────────────────
+# ── TASK 5, output ───────────────────────────────────────────────────────────
 
 panel.to_csv(
     OUT,
@@ -227,24 +227,24 @@ print(f"  Head:\n{head.head(6).to_string(index=False)}")
 entry = """
 ---
 
-## 6. Education by Department — Census Snapshots 2011 / 2016 / 2022
+## 6. Education by Department, Census Snapshots 2011 / 2016 / 2022
 
-- **Full name**: Diplômes et formation 2022 — Base communale des diplômes et formations
+- **Full name**: Diplômes et formation 2022, Base communale des diplômes et formations
 - **Producer**: INSEE (Institut national de la statistique et des études économiques)
 - **Source page**: insee.fr/fr/statistiques/8581488
 - **File used**: `base-cc-diplomes-formation-2022.CSV` (separator `;`, encoding latin-1)
 - **Coverage**: Metropolitan France (96 departments), three rolling-census snapshots
 - **Reference years**: 2010 five-year rolling → labelled 2011 / 2015 rolling → 2016 / 2022 rolling → 2022
 - **Geographic level used**: Commune → aggregated to department by population-weighted sum
-- **Variable**: `edu_share_sup` — share (%) of non-schooled population aged 15+ holding any higher-education diploma (supérieur), computed as:
+- **Variable**: `edu_share_sup`, share (%) of non-schooled population aged 15+ holding any higher-education diploma (supérieur), computed as:
   - 2022: (P22_NSCOL15P_SUP2 + P22_NSCOL15P_SUP34 + P22_NSCOL15P_SUP5) / P22_NSCOL15P × 100
   - 2016: P16_NSCOL15P_SUP / P16_NSCOL15P × 100
   - 2011: (P11_NSCOL15P_BACP2 + P11_NSCOL15P_SUP) / P11_NSCOL15P × 100
-- **Note — sub-level comparability**: Total supérieur only; sub-level breakdowns (SUP2/SUP34/SUP5 in 2022 vs. single SUP in 2016) are not cross-year comparable and are not used.
+- **Note, sub-level comparability**: Total supérieur only; sub-level breakdowns (SUP2/SUP34/SUP5 in 2022 vs. single SUP in 2016) are not cross-year comparable and are not used.
 - **Output file**: `sources/education_snapshots_insee.csv` (288 rows × 3 cols: dep_code, year, edu_share_sup; `;`-delimited, CODGEO/dep_code quoted)
 - **Processing**: Numerator and denominator summed at commune level within each department (skipna); share computed from department totals. DOM departments (971–976) excluded.
 
-### Suppressed data — 4 Cantal communes
+### Suppressed data, 4 Cantal communes
 
 INSEE suppressed education data for 4 communes in Cantal (dep 15): 15031, 15035, 15047, 15171.
 These communes have no recoverable population data in this file across any of the three census years.
@@ -257,4 +257,4 @@ be confirmed from the census file alone.
 with open(DATA_SOURCES, "a", encoding="utf-8") as fh:
     fh.write(entry)
 print(f"\n  Appended entry to {DATA_SOURCES}")
-print("\nDone. STOP — interpolation and merge are separate next steps.")
+print("\nDone. STOP, interpolation and merge are separate next steps.")
