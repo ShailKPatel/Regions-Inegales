@@ -110,3 +110,72 @@ This result should replace the untested "informalisation of labour"
 assertion currently in `FINDINGS.md`. If the verdict above is anything
 other than a clean SUPPORTS, `FINDINGS.md`'s wording needs to be walked
 back to match the evidence, not the other way around.
+
+
+---
+
+## Per-capita decomposition
+
+_Appended by model/percapita_decomposition.py_
+
+The share test above (individual_share) showed poverty predicts a higher
+individual/micro registration share. A share can rise because individual
+registrations increase, or because company registrations decrease. This
+section tests the two per-capita levels separately with the identical
+final_model.py pipeline (same XGBoost hyperparameters, LODO headline CV,
+OOF SHAP, department-clustered OLS unweighted + population-weighted).
+
+- **Target A**: `creations_individual / pop_jan1 * 100000`
+- **Target B**: `(creations_sarl + creations_sas) / pop_jan1 * 100000`
+
+### LODO cross-validation
+
+| Target | LODO R2 |
+|---|---|
+| A: individual per capita | 0.649 |
+| B: company (SARL+SAS) per capita | 0.544 |
+
+### OOF SHAP ranking
+
+| Rank | Target A feature | Mean \|SHAP\| | Target B feature | Mean \|SHAP\| |
+|---|---|---|---|---|
+| 1 | Median income | 90.8495 | Higher-ed share | 27.2109 |
+| 2 | Higher-ed share | 69.5394 | Gini coefficient | 27.0220 |
+| 3 | Poverty rate | 58.7053 | Median income | 21.7732 |
+| 4 | Wage income share | 51.5816 | % Urban | 15.2201 |
+| 5 | Doctor density | 26.8815 | Poverty rate | 13.7418 |
+| 6 | Gini coefficient | 24.1340 | Wage income share | 12.0676 |
+| 7 | Unemployment rate | 16.1524 | Doctor density | 8.5747 |
+| 8 | % Urban | 13.0475 | Unemployment rate | 2.4007 |
+
+
+poverty_rate_disp rank: Target A 3/8, Target B 5/8.
+unemployment_rate rank: Target A 7/8, Target B 8/8.
+
+Figures: `figures/percapita_shap_individual.png`, `figures/percapita_shap_company.png`
+
+### OLS (department-clustered SE)
+
+| Target | Feature | Spec | Coef | p-value |
+|---|---|---|---|---|
+| A (individual) | poverty_rate_disp | Unweighted | +44.9930 | 1.5066e-12 |
+| A (individual) | poverty_rate_disp | Pop-weighted | +63.3005 | 1.2546e-15 |
+| A (individual) | unemployment_rate | Unweighted | -18.5146 | 7.8654e-02 |
+| A (individual) | unemployment_rate | Pop-weighted | -45.4004 | 1.0276e-03 |
+| B (company) | poverty_rate_disp | Unweighted | +14.7523 | 2.2657e-04 |
+| B (company) | poverty_rate_disp | Pop-weighted | +22.2939 | 2.0871e-06 |
+| B (company) | unemployment_rate | Unweighted | -11.5656 | 2.3750e-02 |
+| B (company) | unemployment_rate | Pop-weighted | -20.7893 | 2.6577e-03 |
+
+### Verdict
+
+**PARTIAL: poverty predicts both individual and company registrations per capita, informalisation explains some but not all of the level effect.**
+
+**Evidence:**
+- Target A (individual, per capita): poverty coef +44.9930 (p=1.507e-12) unweighted, +63.3005 (p=1.255e-15) pop-weighted. SHAP rank 3/8.
+- Target B (company, per capita): poverty coef +14.7523 (p=2.266e-04) unweighted, +22.2939 (p=2.087e-06) pop-weighted. SHAP rank 5/8.
+
+This decomposition should be read together with the share-level verdict
+above (MIXED/INCONCLUSIVE overall, because unemployment does not show
+the informalisation signature). This section speaks only to poverty's
+share effect, not unemployment's.
