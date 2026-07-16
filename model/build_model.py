@@ -1,4 +1,11 @@
 """
+DEPRECATED - superseded by model/final_model.py.
+This is the earlier draft of the same pipeline (same OOF-SHAP-via-LODO
+methodology, same numbers). It predates final_model.py's polished
+robustness sections and figures, and its output (model/metrics.md) is
+not cited anywhere in FINDINGS.md. Kept for reference only; cite
+model/final_model.py + model/findings_final.md as canonical.
+
 Feature engineering + baseline model for firm_rate (firm creations per 1000 pop).
 Reads merged/france_panel_master.csv (read-only) + sources/population_insee.csv.
 Writes figures to figures/, metrics to model/metrics.md.
@@ -185,7 +192,7 @@ _xgb_is.fit(X, y)
 _shap_insample = shap.TreeExplainer(_xgb_is).shap_values(X)
 _mas_insample  = pd.Series(np.abs(_shap_insample).mean(axis=0), index=FEATURES)
 
-# OOF SHAP — primary
+# OOF SHAP, primary
 shap_values = np.zeros((len(X), len(FEATURES)), dtype=float)
 for tr, te in lodo_splits:
     _m = xgb.XGBRegressor(**xgb_params)
