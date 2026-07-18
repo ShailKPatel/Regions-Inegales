@@ -8,7 +8,7 @@ import os, random, zipfile
 import pandas as pd
 import numpy as np
 
-PROJECT   = "/home/crusie/3. Code/Régions Inégales"
+PROJECT   = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FILO_PATH = os.path.join(PROJECT, "Base niveau administratif/filosofi_income_panel.csv")
 FIRMS_PATH = os.path.join(PROJECT, "firms_clean/firms_panel.csv")
 ZIP_PATH  = os.path.join(PROJECT, "d'entreprises/DS_SIDE_CREA_DEP_REG_NAT_2024_CSV_FR.zip")
@@ -52,7 +52,7 @@ bad = filo[
     )
 ]
 if bad.empty:
-    print("  PASS, all 960 rows satisfy strict ordering ✓")
+    print("  PASS, all 960 rows satisfy strict ordering OK")
 else:
     violations["filo_l1"] += len(bad)
     print(f"  FAIL, {len(bad)} violation(s):")
@@ -68,7 +68,7 @@ bad_dec = filo[
     )
 ]
 if bad_dec.empty:
-    print("  PASS, dec-income ordering also holds ✓")
+    print("  PASS, dec-income ordering also holds OK")
 else:
     violations["filo_l1"] += len(bad_dec)
     print(f"  FAIL (dec), {len(bad_dec)} violation(s):")
@@ -80,7 +80,7 @@ for col in ["gini_disp", "gini_dec"]:
     hard = filo[(filo[col] <= 0) | (filo[col] >= 1)]
     soft = filo[(filo[col] < 0.15) | (filo[col] > 0.55)]
     if hard.empty:
-        print(f"  {col}: no hard errors ✓")
+        print(f"  {col}: no hard errors OK")
     else:
         violations["filo_l1"] += len(hard)
         print(f"  {col}: HARD ERROR, {len(hard)} rows outside (0,1)")
@@ -89,7 +89,7 @@ for col in ["gini_disp", "gini_dec"]:
         print(f"  {col}: SOFT FLAG, {len(soft)} rows outside (0.15,0.55):")
         print(soft[["dep_code","year",col]].to_string(index=False))
     else:
-        print(f"  {col}: soft range fine ✓")
+        print(f"  {col}: soft range fine OK")
 
 # ── Check 3: D9/D1 ratio consistency ─────────────────────────────────────────
 print("\n[F3] D9/D1 ratio consistency: recomputed d9_disp/d1_disp vs stored d9_d1_disp (tolerance 1%)")
@@ -97,7 +97,7 @@ filo["_ratio_check"] = filo["d9_disp"] / filo["d1_disp"]
 filo["_ratio_pct_err"] = (filo["_ratio_check"] - filo["d9_d1_disp"]).abs() / filo["d9_d1_disp"] * 100
 bad_ratio = filo[filo["_ratio_pct_err"] > 1.0]
 if bad_ratio.empty:
-    print("  PASS, all 960 ratios match within 1% ✓")
+    print("  PASS, all 960 ratios match within 1% OK")
     print(f"  Max discrepancy: {filo['_ratio_pct_err'].max():.4f}%")
 else:
     violations["filo_l1"] += len(bad_ratio)
@@ -110,7 +110,7 @@ filo["_ratio_check"] = filo["d9_dec"] / filo["d1_dec"]
 filo["_ratio_pct_err"] = (filo["_ratio_check"] - filo["d9_d1_dec"]).abs() / filo["d9_d1_dec"] * 100
 bad_ratio_dec = filo[filo["_ratio_pct_err"] > 1.0]
 if bad_ratio_dec.empty:
-    print(f"  PASS (dec cols), max discrepancy: {filo['_ratio_pct_err'].max():.4f}% ✓")
+    print(f"  PASS (dec cols), max discrepancy: {filo['_ratio_pct_err'].max():.4f}% OK")
 else:
     violations["filo_l1"] += len(bad_ratio_dec)
     print(f"  FAIL (dec), {len(bad_ratio_dec)} mismatches:")
@@ -122,7 +122,7 @@ print("\n[F4] Poverty rate bounds: 0 < poverty_rate_disp < 60")
 for col in ["poverty_rate_disp", "poverty_rate_dec"]:
     bad = filo[(filo[col] <= 0) | (filo[col] >= 60)]
     if bad.empty:
-        print(f"  {col}: PASS, all in (0,60) ✓  [range: {filo[col].min():.1f}–{filo[col].max():.1f}]")
+        print(f"  {col}: PASS, all in (0,60) OK  [range: {filo[col].min():.1f}–{filo[col].max():.1f}]")
     else:
         violations["filo_l1"] += len(bad)
         print(f"  {col}: FAIL, {len(bad)} rows outside (0,60):")
@@ -136,7 +136,7 @@ print(f"  Sum range: {filo['_pct_sum'].min():.1f} – {filo['_pct_sum'].max():.1
 print(f"  Mean sum: {filo['_pct_sum'].mean():.2f}  Std: {filo['_pct_sum'].std():.3f}")
 outside = filo[(filo["_pct_sum"] < 90) | (filo["_pct_sum"] > 110)]
 if outside.empty:
-    print(f"  PASS, all rows sum within 90–110 ✓")
+    print(f"  PASS, all rows sum within 90–110 OK")
 else:
     print(f"  FLAG, {len(outside)} rows outside 90–110 (may indicate partial coverage):")
     print(outside[["dep_code","year","_pct_sum"] + pct_cols].head(10).to_string(index=False))
@@ -149,7 +149,7 @@ filo_sorted["_q2_pct_chg"] = filo_sorted.groupby("dep_code")["q2_disp"].pct_chan
 jumps = filo_sorted[filo_sorted["_q2_pct_chg"].abs() > 25].copy()
 if jumps.empty:
     max_jump = filo_sorted["_q2_pct_chg"].abs().max()
-    print(f"  PASS, no year-over-year jump > 25% ✓  (max observed: {max_jump:.2f}%)")
+    print(f"  PASS, no year-over-year jump > 25% OK  (max observed: {max_jump:.2f}%)")
 else:
     violations["filo_l1"] += len(jumps)
     print(f"  FAIL, {len(jumps)} jumps > 25%:")
@@ -169,7 +169,7 @@ print("\n[FR1] Non-negativity: all creation counts >= 0")
 count_cols = [c for c in firms.columns if c.startswith("creations_") or c == "total_firm_creations"]
 neg = firms[(firms[count_cols] < 0).any(axis=1)]
 if neg.empty:
-    print(f"  PASS, no negative values in any of {len(count_cols)} columns ✓")
+    print(f"  PASS, no negative values in any of {len(count_cols)} columns OK")
     print(f"  Minimum value across all count columns: {firms[count_cols].min().min():.0f}")
 else:
     violations["firms_l1"] += len(neg)
@@ -186,7 +186,7 @@ print(f"  Gap (total − lf_sum): min={firms['_lf_gap'].min():.0f}  max={firms['
 print(f"  Gap as % of total:    min={firms['_lf_pct'].min():.3f}%  max={firms['_lf_pct'].max():.3f}%  mean={firms['_lf_pct'].mean():.3f}%")
 large = firms[firms["_lf_gap"].abs() > firms["total_firm_creations"] * 0.02]
 if large.empty:
-    print("  PASS, legal-form components sum within 2% of total for all rows ✓")
+    print("  PASS, legal-form components sum within 2% of total for all rows OK")
 else:
     violations["firms_l1"] += len(large)
     print(f"  FLAG, {len(large)} rows with >2% gap:")
@@ -207,7 +207,7 @@ print("  Largest sector gaps (top 5 by absolute gap):")
 print(worst_sec.to_string(index=False))
 large_sec = firms[firms["_sec_gap"].abs() > firms["total_firm_creations"] * 0.02]
 if large_sec.empty:
-    print("  PASS, sector components sum within 2% of total for all rows ✓")
+    print("  PASS, sector components sum within 2% of total for all rows OK")
 else:
     violations["firms_l1"] += len(large_sec)
     print(f"  FLAG, {len(large_sec)} rows with >2% gap (may reflect agriculture excluded from A21)")
@@ -220,7 +220,7 @@ firms_sorted["_fc_pct_chg"] = firms_sorted.groupby("dep_code")["total_firm_creat
 jumps_f = firms_sorted[firms_sorted["_fc_pct_chg"].abs() > 60].copy()
 if jumps_f.empty:
     max_j = firms_sorted["_fc_pct_chg"].abs().max()
-    print(f"  PASS, no jump > 60% ✓  (max observed: {max_j:.1f}%)")
+    print(f"  PASS, no jump > 60% OK  (max observed: {max_j:.1f}%)")
 else:
     print(f"  NOTE, {len(jumps_f)} jumps > 60% (checking whether these are 2021 COVID bounce or alignment errors):")
     print(jumps_f[["dep_code","year","total_firm_creations","_fc_pct_chg"]].to_string(index=False))
@@ -250,7 +250,7 @@ for r in rank_table:
 
 anom = [r for r in rank_table if r["flag75"] or r["flag48"]]
 if not anom:
-    print("  PASS, Paris always top-5, Lozère always bottom-10 across all 10 years ✓")
+    print("  PASS, Paris always top-5, Lozère always bottom-10 across all 10 years OK")
 else:
     violations["firms_l1"] += len(anom)
     print(f"  FAIL, {len(anom)} year(s) with rank anomalies (see *** above)")
@@ -335,7 +335,7 @@ for dep, yr in sorted(firms_sample, key=lambda x: (x[0], x[1])):
     ok = panel_val == raw_val
     if ok:
         matched += 1
-    flag = "✓" if ok else "✗ MISMATCH"
+    flag = "OK" if ok else "FAIL MISMATCH"
     print(f"  {dep:>4} | {yr:>4} | {panel_val:>8,} | {raw_val:>8,} | {flag}")
 
 print(f"\nResult: {matched}/15 cells matched raw recompute")
@@ -351,7 +351,7 @@ print(f"  Firms structural violations    : {violations['firms_l1']}")
 print(f"  Firms raw spot-check           : {matched}/15 matched")
 print()
 if violations["filo_l1"] == 0 and violations["firms_l1"] == 0 and matched == 15:
-    print("  PRELIMINARY VERDICT: ✓ No structural issues found.")
+    print("  PRELIMINARY VERDICT: OK No structural issues found.")
     print("  Awaiting Layer 3 web anchors for absolute-value confirmation.")
 else:
-    print("  ⚠ ISSUES FOUND, see details above before proceeding to analysis.")
+    print("  WARNING ISSUES FOUND, see details above before proceeding to analysis.")

@@ -12,8 +12,8 @@ import xlrd
 import pandas as pd
 import openpyxl
 
-BASE_DIR = pathlib.Path("/home/crusie/3. Code/Régions Inégales/Base niveau administratif")
-PROJECT_ROOT = pathlib.Path("/home/crusie/3. Code/Régions Inégales")
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[2]
+BASE_DIR = PROJECT_ROOT / "Base niveau administratif"
 
 SAMPLE_ROWS = 3
 POSSIBLE_JOIN_KEYS = {"dep", "codgeo", "code", "code_dep", "code_departement", "reg", "coddep", "CODGEO", "DEP"}
@@ -133,14 +133,14 @@ conversion_report = {}
 
 # Also flag 2013 immediately
 print(f"\n{'─' * 60}")
-print(f"  YEAR 2013 , ⚠ ZIP CORRUPTED")
+print(f"  YEAR 2013 , WARNING ZIP CORRUPTED")
 print(f"{'─' * 60}")
 print(f"  ERROR: indic-struct-distrib-revenu-2013-SUPRA.zip is not a valid ZIP file.")
 print(f"  ACTION NEEDED: Please re-download the 2013 file from:")
 print(f"    https://www.insee.fr/fr/statistiques/2388413")
-join_key_summary["2013"] = {"⚠ MISSING, ZIP corrupted, must re-download"}
+join_key_summary["2013"] = {"WARNING MISSING, ZIP corrupted, must re-download"}
 conversion_report["2013"] = [{"file": "indic-struct-distrib-revenu-2013-SUPRA.zip",
-                               "type": "N/A", "safe_to_convert": "⚠ MISSING, ZIP corrupted"}]
+                               "type": "N/A", "safe_to_convert": "WARNING MISSING, ZIP corrupted"}]
 
 for year in all_years:
     folder = BASE_DIR / f"annee_{year}"
@@ -194,7 +194,7 @@ for year in all_years:
         print(f"    Columns   : {r.get('columns', 'N/A')}")
         print(f"    Total rows: {r.get('total_rows', 'N/A')}")
         jk = r.get('join_key')
-        print(f"    Join key  : {jk if jk else '⚠ not found, check manually'}")
+        print(f"    Join key  : {jk if jk else 'WARNING not found, check manually'}")
         print(f"    Conversion: {r.get('safe_to_convert', 'N/A')}")
         print(f"    Sample ({SAMPLE_ROWS} rows):")
         for line in r.get("sample", "N/A").splitlines():
@@ -214,7 +214,7 @@ for year in all_years:
                 year_results.append({"file": f.name, "type": "XLSX", "safe_to_convert": "pending, not inspected"})
 
     conversion_report[year] = year_results
-    join_key_summary[year] = year_join_keys if year_join_keys else {"⚠ NOT FOUND"}
+    join_key_summary[year] = year_join_keys if year_join_keys else {"WARNING NOT FOUND"}
 
 
 # ---------------------------------------------------------------------------

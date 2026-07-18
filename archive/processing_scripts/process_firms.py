@@ -9,7 +9,7 @@ import zipfile
 import pandas as pd
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-PROJECT   = "/home/crusie/3. Code/Régions Inégales"
+PROJECT   = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ZIP_PATH  = os.path.join(PROJECT, "d'entreprises/DS_SIDE_CREA_DEP_REG_NAT_2024_CSV_FR.zip")
 RAW_DIR   = os.path.join(PROJECT, "firms_raw")
 CLEAN_DIR = os.path.join(PROJECT, "firms_clean")

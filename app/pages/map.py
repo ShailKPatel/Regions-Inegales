@@ -9,7 +9,7 @@ import plotly.express as px
 from utils import page_header, plotly_defaults, render_footer
 
 from data_loader import (
-    load_panel, get_dept_names, get_year_slice, get_dept_year, COLUMN_MAP
+    load_panel, get_dept_names, get_year_slice, get_dept_year
 )
 
 page_header(

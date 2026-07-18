@@ -7,7 +7,7 @@ import re, pathlib
 import pandas as pd
 import numpy as np
 
-CLEAN = pathlib.Path("/home/crusie/3. Code/Régions Inégales/filosofi_clean")
+CLEAN = pathlib.Path(__file__).resolve().parents[2] / "filosofi_clean"
 MASTER = CLEAN / "filosofi_all_years.csv"
 
 print("Loading master CSV…")
@@ -41,7 +41,7 @@ verdict_year_siloed = True
 for pattern, year, label in test_specs:
     col = find_col(pattern)
     if col is None:
-        print(f"  {label}: ⚠ no column found for pattern '{pattern}'")
+        print(f"  {label}: WARNING no column found for pattern '{pattern}'")
         continue
     total    = master[col].notna().sum()
     in_year  = master.loc[master["YEAR"].astype(int) == year,  col].notna().sum()
@@ -161,7 +161,7 @@ for label, pat in KEY_PATTERNS.items():
     found = [(b, yc, cov, ex) for b, yc, cov, ex in all_base_rows
              if re.search(pat, b)]
     if not found:
-        print(f"    ⚠ none found")
+        print(f"    WARNING none found")
     for base, year_codes, coverage, example in found:
         print(f"    {base:<35s} {str(len(year_codes)):<6} {coverage:<25} val={example[:20]}")
 
@@ -253,7 +253,7 @@ for pat, canonical, desc in RENAME_MAP:
     base_pat = pat.replace(r"\{YY\}", r"\{YY\}")
     matched_bases = [b for b in base_groups.keys() if re.search(base_pat, b)]
     if not matched_bases:
-        print(f"  {'⚠ ' + pat:<35s} → {canonical:<35s} ⚠ NOT FOUND in data")
+        print(f"  {'WARNING ' + pat:<35s} → {canonical:<35s} WARNING NOT FOUND in data")
         continue
     for base in matched_bases:
         members = base_groups[base]

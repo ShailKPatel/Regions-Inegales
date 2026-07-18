@@ -1,8 +1,8 @@
 """
 Internal-consistency crosscheck for the SIDE firm-creation source.
 
-Unlike unemployment (sources/_unemployment_bdm_crosscheck.csv)
-and doctor density (sources/_doctor_density_pop_crosscheck.csv), the firm-creation
+Unlike unemployment (sources/_unemployment_bdm_crosscheck.csv) and doctor
+density (sources/_doctor_density_pop_crosscheck.csv), the firm-creation
 source -- which supplies total_firm_creations, the numerator of the model's sole
 target variable firm_rate -- had no reproducible verification artifact at all.
 

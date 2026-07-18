@@ -2,7 +2,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import streamlit as st
-from utils import page_header, source_card, render_footer, BLUE, RED
+from utils import page_header, source_card, render_footer
 
 page_header(
     "Methods",

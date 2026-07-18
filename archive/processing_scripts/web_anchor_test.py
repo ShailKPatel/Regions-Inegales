@@ -3,9 +3,13 @@ Master large web-anchor test, Régions Inégales
 Read-only. Touch nothing.
 """
 
+import os
 import pandas as pd
 
-MASTER_PATH = "/home/crusie/3. Code/Régions Inégales/merged/france_panel_master.csv"
+MASTER_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "merged/france_panel_master.csv",
+)
 
 df = pd.read_csv(MASTER_PATH, sep=";", dtype={"dep_code": str})
 assert df.shape == (960, 39), f"Unexpected shape {df.shape}"
@@ -171,7 +175,7 @@ aura_sum = aura_2019["total_firm_creations"].sum()
 print(f"  Exact sum: {aura_sum:,.0f}")
 exceeds_threshold = aura_sum > 100_000
 within_band = 100_000 <= aura_sum <= 115_000
-print(f"  Exceeds 100,000 threshold  : {'YES ✓' if exceeds_threshold else 'NO ✗'}")
+print(f"  Exceeds 100,000 threshold  : {'YES OK' if exceeds_threshold else 'NO FAIL'}")
 print(f"  Within soft band 100k–115k : {'YES' if within_band else 'FLAG, outside soft band'}")
 print(f"  Per-dept breakdown:")
 for _, row in aura_2019.sort_values("dep_code").iterrows():
@@ -214,7 +218,7 @@ b_pass = 13 - b_fail
 c_fail = len(failures_c)
 c_pass = 1 - c_fail
 
-d_note = f"sum={aura_sum:,.0f} {'✓ >100k' if exceeds_threshold else '✗ ≤100k'} {'(in band)' if within_band else '(OUTSIDE soft band)'}"
+d_note = f"sum={aura_sum:,.0f} {'OK >100k' if exceeds_threshold else 'FAIL ≤100k'} {'(in band)' if within_band else '(OUTSIDE soft band)'}"
 
 total_hard_fail = a_hard_fail_count + b_fail + c_fail + (0 if exceeds_threshold else 1)
 # Total cells: 96 (A) + 13 (B) + 1 (C) + 1 (D) = 111... but spec says 110

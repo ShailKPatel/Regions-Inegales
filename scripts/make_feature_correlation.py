@@ -9,7 +9,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-import matplotlib.ticker as mticker
 
 import sys
 BASE    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

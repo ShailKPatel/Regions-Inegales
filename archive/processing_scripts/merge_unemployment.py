@@ -3,11 +3,12 @@ Dataset 3 merge: unemployment_rate → france_panel_master.csv
 Steps 0–4 per specification.
 """
 
+import os
 import shutil
 import sys
 import pandas as pd
 
-BASE = "/home/crusie/3. Code/Régions Inégales"
+BASE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MASTER_PATH  = f"{BASE}/merged/france_panel_master.csv"
 BACKUP_PATH  = f"{BASE}/merged/_backup_master_pre_unemployment.csv"
 UNEMP_PATH   = f"{BASE}/sources/unemployment_insee.csv"
@@ -96,7 +97,7 @@ ghost_right = result[unemp_cols].isna().all(axis=1).sum()
 gate(ghost_left  == 0, f"{ghost_left} rows with all-null master side (ghost rows)")
 gate(ghost_right == 0, f"{ghost_right} rows with all-null unemp side")
 
-print(f"  Shape after merge      : {result.shape}  ✓")
+print(f"  Shape after merge      : {result.shape}  OK")
 print("  Hard gates             : ALL PASS")
 
 # ── STEP 3, Post-merge integrity ─────────────────────────────────────────────
@@ -109,17 +110,17 @@ def get_cell(df, dep, yr, col):
 # (a)
 val_a = get_cell(result, "66", 2015, "unemployment_rate")
 ok_a  = abs(val_a - 15.3) < 1e-9
-print(f"  (a) dep=66 yr=2015 unemployment_rate : {val_a}  (expect 15.3)  {'✓' if ok_a else '✗ MISMATCH'}")
+print(f"  (a) dep=66 yr=2015 unemployment_rate : {val_a}  (expect 15.3)  {'OK' if ok_a else 'FAIL MISMATCH'}")
 
 # (b)
 val_b = get_cell(result, "75", 2021, "unemployment_rate")
 ok_b  = abs(val_b - 6.5) < 1e-9
-print(f"  (b) dep=75 yr=2021 unemployment_rate : {val_b}  (expect 6.5)   {'✓' if ok_b else '✗ MISMATCH'}")
+print(f"  (b) dep=75 yr=2021 unemployment_rate : {val_b}  (expect 6.5)   {'OK' if ok_b else 'FAIL MISMATCH'}")
 
 # (c)
 val_c = get_cell(result, "93", 2018, "poverty_rate_disp")
 ok_c  = abs(val_c - 28.4) < 0.05
-print(f"  (c) dep=93 yr=2018 poverty_rate_disp : {val_c}  (expect 28.4)  {'✓' if ok_c else '✗ MISMATCH'}")
+print(f"  (c) dep=93 yr=2018 poverty_rate_disp : {val_c}  (expect 28.4)  {'OK' if ok_c else 'FAIL MISMATCH'}")
 
 if not (ok_a and ok_b and ok_c):
     abort("Spot-check failure, not writing master")
@@ -143,9 +144,9 @@ print("\n  Per-year row counts:")
 year_counts = result.groupby("year").size()
 all_96 = (year_counts == 96).all()
 for yr, cnt in year_counts.items():
-    print(f"    {yr}: {cnt} rows  {'✓' if cnt == 96 else '✗'}")
+    print(f"    {yr}: {cnt} rows  {'OK' if cnt == 96 else 'FAIL'}")
 gate(all_96, "Not all years have exactly 96 rows")
-print(f"  All years = 96 rows    : {'✓' if all_96 else '✗'}")
+print(f"  All years = 96 rows    : {'OK' if all_96 else 'FAIL'}")
 
 # ── STEP 4, Write & document ─────────────────────────────────────────────────
 

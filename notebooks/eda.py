@@ -31,7 +31,7 @@ except ImportError:
 warnings.filterwarnings('ignore')
 
 import sys
-ROOT = "/home/crusie/3. Code/Régions Inégales"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from panel_config import PANEL_START, PANEL_END
 FIGS = os.path.join(ROOT, "figures")
