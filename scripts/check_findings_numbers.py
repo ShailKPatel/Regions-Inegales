@@ -4,12 +4,12 @@ Number-provenance checker for FINDINGS.md.
 Extracts every decimal number quoted in FINDINGS.md and checks whether a
 matching number (within rounding tolerance) exists somewhere in the
 generated model/findings_*.md files it is supposed to summarize. This is a
-smoke test for transcription errors like reporting -0.185 when the source
-file says -18.51 (see AUDIT_REPORT.md finding C-4) -- it is not a proof of
+smoke test for transcription errors, such as a table reporting a value that
+is off by two orders of magnitude from its source; it is not a proof of
 correctness, since some numbers in FINDINGS.md are legitimately derived
 (sums, ratios, rounded restatements) and won't appear verbatim in any
-source file. Anything flagged UNMATCHED needs a human (or the next Claude)
-to manually confirm it traces back to a real computation before merging.
+source file. Anything flagged UNMATCHED needs manual confirmation that it
+traces back to a real computation before merging.
 
 Usage: python scripts/check_findings_numbers.py
 """

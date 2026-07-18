@@ -1,8 +1,8 @@
 """
 Internal-consistency crosscheck for the SIDE firm-creation source.
 
-AUDIT_REPORT.md finding H-1: unlike unemployment (sources/_unemployment_bdm_crosscheck.csv)
-and doctor density (sources/_doctor_density_pop_crosscheck.csv), the firm-creation
+Unlike unemployment (sources/_unemployment_bdm_crosscheck.csv) and doctor
+density (sources/_doctor_density_pop_crosscheck.csv), the firm-creation
 source -- which supplies total_firm_creations, the numerator of the model's sole
 target variable firm_rate -- had no reproducible verification artifact at all.
 
@@ -16,7 +16,7 @@ sector breakdown, across all 960 rows and all 10 years including the
 reproducible check of the SIDE data's internal arithmetic -- it is NOT a
 substitute for an external cross-reference against published INSEE Premiere
 national annual figures, which remains an open item (see DATA_SOURCES.md
-Source 2 and AUDIT_REPORT.md "Could not verify").
+Source 2).
 
 Writes: sources/_side_firm_creations_crosscheck.csv
 """

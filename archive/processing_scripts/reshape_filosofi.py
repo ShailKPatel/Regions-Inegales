@@ -7,7 +7,7 @@ import pathlib
 import pandas as pd
 import numpy as np
 
-CLEAN = pathlib.Path("/home/crusie/3. Code/Régions Inégales/filosofi_clean")
+CLEAN = pathlib.Path(__file__).resolve().parents[2] / "filosofi_clean"
 
 # ---------------------------------------------------------------------------
 # Load
@@ -182,14 +182,14 @@ print(f"\n  Shape: {panel.shape}  (expect ~960 rows × 29 cols)")
 
 print("\n  Rows per year:")
 for y, n in panel["year"].value_counts().sort_index().items():
-    flag = " ← ⚠" if n != 96 else ""
+    flag = " ← WARNING" if n != 96 else ""
     print(f"    {y}: {n} rows{flag}")
 
 print("\n  Null count per column:")
 null_counts = panel.isna().sum()
 for col, n in null_counts.items():
     pct = n / len(panel) * 100
-    flag = " ← ⚠ high" if pct > 50 else ""
+    flag = " ← WARNING high" if pct > 50 else ""
     print(f"    {col:<25s}: {n:>4} nulls ({pct:5.1f}%){flag}")
 
 # Key variable range checks
@@ -201,7 +201,7 @@ checks = [
 print("\n  Key variable range checks (by year):")
 for col, lo, hi, label in checks:
     if col not in panel.columns or panel[col].isna().all():
-        print(f"\n  {col}: ⚠ all null")
+        print(f"\n  {col}: WARNING all null")
         continue
     print(f"\n  {col}, {label}  [expected {lo}–{hi}]")
     yr_stats = (panel.groupby("year")[col]
@@ -210,7 +210,7 @@ for col, lo, hi, label in checks:
     for yr, row in yr_stats.iterrows():
         flag = ""
         if row["min"] < lo or row["max"] > hi:
-            flag = f"  ← ⚠ OUTSIDE [{lo}–{hi}]"
+            flag = f"  ← WARNING OUTSIDE [{lo}–{hi}]"
         print(f"    {yr}: min={row['min']:>8}  max={row['max']:>8}  mean={row['mean']:>8}{flag}")
 
 print("\n  First 5 rows:")

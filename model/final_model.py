@@ -171,7 +171,7 @@ for tr, te in lodo_splits:
 mas = pd.Series(np.abs(shap_values).mean(axis=0), index=FEATURES)
 shap_order = mas.sort_values(ascending=False).index.tolist()
 
-r("C-2 IN-SAMPLE vs OOF MEAN |SHAP| COMPARISON:")
+r("IN-SAMPLE vs OOF MEAN |SHAP| COMPARISON:")
 r(f"  {'Feature':<30} {'In-sample':>10} {'OOF':>10}")
 r("  " + "-" * 52)
 for _f in FEATURES:
@@ -231,7 +231,7 @@ pov_pval_uw = ols_uw.pvalues["poverty_rate_disp"]
 pov_coef_wt = ols_wt.params["poverty_rate_disp"]
 pov_pval_wt = ols_wt.pvalues["poverty_rate_disp"]
 
-r("C-1 NON-CLUSTERED vs DEPARTMENT-CLUSTERED SE (full panel):")
+r("NON-CLUSTERED vs DEPARTMENT-CLUSTERED SE (full panel):")
 for _feat, _label in [("unemployment_rate", "unemployment_rate"), ("poverty_rate_disp", "poverty_rate_disp")]:
     r(f"  {_label}:")
     r(f"    UW non-clustered: coef={_ols_uw_nc.params[_feat]:+.4f}  p={_ols_uw_nc.pvalues[_feat]:.3e}")

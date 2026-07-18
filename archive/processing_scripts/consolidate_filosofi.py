@@ -10,7 +10,7 @@ import numpy as np
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-PROJECT  = pathlib.Path("/home/crusie/3. Code/Régions Inégales")
+PROJECT  = pathlib.Path(__file__).resolve().parents[2]
 BASE     = PROJECT / "Base niveau administratif"
 OUT_DIR  = PROJECT / "filosofi_clean"
 OUT_DIR.mkdir(exist_ok=True)
@@ -210,7 +210,7 @@ def horizontal_merge(dfs: list[pd.DataFrame], source_names: list[str]) -> pd.Dat
         base = base.merge(incoming[merge_cols], on="CODGEO", how="outer")
 
         if drop_from_new:
-            print(f"    ✓  {src_name}: {len(drop_from_new)} truly-identical columns dropped")
+            print(f"    OK  {src_name}: {len(drop_from_new)} truly-identical columns dropped")
 
     return base
 
@@ -342,7 +342,7 @@ for col in all_cols_sorted:
     row_str = f"  {col:<30s}"
     for y in present_years:
         has_it = col in year_dfs[y].columns
-        row_str += "    ✓" if has_it else "    ·"
+        row_str += "    OK" if has_it else "    ·"
     print(row_str)
 
 
@@ -357,28 +357,28 @@ print("=" * 72)
 print("\n  Rows per year:")
 year_counts = master["YEAR"].value_counts().sort_index()
 for y, n in year_counts.items():
-    gap = "  ← ⚠ MISSING?" if int(y) not in ALL_YEARS else ""
+    gap = "  ← WARNING MISSING?" if int(y) not in ALL_YEARS else ""
     print(f"    {y}: {n} rows{gap}")
 missing_years = set(range(2012, 2022)) - set(int(y) for y in year_counts.index)
 if missing_years:
-    print(f"  ⚠ Missing years: {sorted(missing_years)}")
+    print(f"  WARNING Missing years: {sorted(missing_years)}")
 else:
-    print("  ✓ All years 2012–2021 present")
+    print("  OK All years 2012–2021 present")
 
 # 4b, CODGEO values
 print("\n  Unexpected CODGEO values (not standard 2-char dept code):")
 bad = master[~is_dept_codgeo(master["CODGEO"])]["CODGEO"].unique()
 if len(bad) == 0:
-    print("  ✓ All CODGEO values are valid 2-character department codes")
+    print("  OK All CODGEO values are valid 2-character department codes")
 else:
-    print(f"  ⚠ Unexpected: {sorted(bad)[:30]}")
+    print(f"  WARNING Unexpected: {sorted(bad)[:30]}")
 
 # 4c, Departments that appear fewer than 10 times
 print("\n  Departments with < 10 year-appearances (expected max 10):")
 dept_counts = master["CODGEO"].value_counts()
 sparse = dept_counts[dept_counts < 10]
 if len(sparse) == 0:
-    print("  ✓ All departments appear in 10 years")
+    print("  OK All departments appear in 10 years")
 else:
     for code, count in sparse.sort_index().items():
         print(f"    {code}: {count} year(s)")
@@ -394,7 +394,7 @@ for pattern in ("^Q2[0-9]", "TP60[0-9]", "^GI[0-9]"):
     import re as _re
     matches = [c for c in master.columns if _re.search(pattern, c, _re.IGNORECASE)]
     if not matches:
-        print(f"  ⚠  No columns containing '{pattern}'")
+        print(f"  WARNING  No columns containing '{pattern}'")
         continue
     print(f"\n  Columns containing '{pattern}':")
     for col in sorted(matches):

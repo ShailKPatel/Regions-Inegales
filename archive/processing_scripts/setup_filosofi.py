@@ -12,8 +12,8 @@ import traceback
 import pandas as pd
 import openpyxl
 
-BASE_DIR = pathlib.Path("/home/crusie/3. Code/Régions Inégales/Base niveau administratif")
-PROJECT_ROOT = pathlib.Path("/home/crusie/3. Code/Régions Inégales")
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[2]
+BASE_DIR = PROJECT_ROOT / "Base niveau administratif"
 
 # ---------------------------------------------------------------------------
 # Helper: detect year from filename
@@ -165,7 +165,7 @@ for year in sorted(extracted_years.keys()):
             print(f"    Sheets    : {r['sheets']}")
         print(f"    Columns   : {r.get('columns', 'N/A')}")
         print(f"    Total rows: {r.get('total_rows', 'N/A')}")
-        print(f"    Join key  : {r.get('join_key', '⚠ not found, check manually')}")
+        print(f"    Join key  : {r.get('join_key', 'WARNING not found, check manually')}")
         print(f"    Conversion: {r.get('safe_to_convert', 'N/A')}")
         print(f"    Sample ({SAMPLE_ROWS} rows):")
         sample_text = r.get("sample", "N/A")
@@ -176,7 +176,7 @@ for year in sorted(extracted_years.keys()):
             year_join_keys.add(r["join_key"])
 
     conversion_report[year] = year_results
-    join_key_summary[year] = year_join_keys if year_join_keys else {"⚠ NOT FOUND"}
+    join_key_summary[year] = year_join_keys if year_join_keys else {"WARNING NOT FOUND"}
 
 
 # ---------------------------------------------------------------------------

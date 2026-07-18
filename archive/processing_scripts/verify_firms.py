@@ -10,7 +10,7 @@ import zipfile
 import pandas as pd
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-PROJECT      = "/home/crusie/3. Code/Régions Inégales"
+PROJECT      = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIRMS_PANEL  = os.path.join(PROJECT, "firms_clean/firms_panel.csv")
 FILO_PANEL   = os.path.join(PROJECT, "Base niveau administratif/filosofi_income_panel.csv")
 ZIP_PATH     = os.path.join(PROJECT, "d'entreprises/DS_SIDE_CREA_DEP_REG_NAT_2024_CSV_FR.zip")
@@ -108,14 +108,14 @@ for dep, yr in sampled:
     row        = firms[(firms["dep_code"] == dep) & (firms["year"] == yr)].iloc[0]
     panel_val  = int(row["total_firm_creations"])
     raw_val    = int(raw_totals.get((dep, yr), -1))
-    match      = "✓" if panel_val == raw_val else "✗ MISMATCH"
+    match      = "OK" if panel_val == raw_val else "FAIL MISMATCH"
     if panel_val != raw_val:
         all_match = False
     print(f"{dep:>6} | {yr:>4} | {panel_val:>12,} | {raw_val:>14,} | {match}")
 
 print()
 if all_match:
-    print("VERDICT: VERIFIED ✓ , all 8 cells match raw recomputed values")
+    print("VERDICT: VERIFIED OK , all 8 cells match raw recomputed values")
     task1_ok = True
 else:
     print("VERDICT: MISMATCH DETECTED, review details above")
@@ -146,7 +146,7 @@ dtype_ok = (
     str(filo["dep_code"].dtype) == str(firms["dep_code"].dtype) and
     str(filo["year"].dtype)     == str(firms["year"].dtype)
 )
-print(f"\nDtypes compatible: {'YES ✓' if dtype_ok else 'NO ✗, fix before merging'}")
+print(f"\nDtypes compatible: {'YES OK' if dtype_ok else 'NO FAIL, fix before merging'}")
 
 # Inner merge
 inner = pd.merge(filo, firms, on=["dep_code", "year"], how="inner")
@@ -176,10 +176,10 @@ print(f"Outer merge shape: {outer.shape}  (expect (960, ...))")
 outer_ok = outer.shape[0] == 960
 
 if outer_ok and inner_ok:
-    print("\nJOIN VERDICT: PERFECT ALIGNMENT ✓ , inner=960, outer=960")
+    print("\nJOIN VERDICT: PERFECT ALIGNMENT OK , inner=960, outer=960")
     task2_ok = True
 else:
-    print("\nJOIN VERDICT: ALIGNMENT ISSUE ✗")
+    print("\nJOIN VERDICT: ALIGNMENT ISSUE FAIL")
     if not inner_ok:
         print(f"  Inner join has {inner.shape[0]} rows (expected 960)")
     if not outer_ok:
@@ -201,8 +201,8 @@ if task1_ok and task2_ok:
     print(f"""
 Both verifications passed. Run these commands manually to free disk space:
 
-  rm -rf "/home/crusie/3. Code/Régions Inégales/firms_raw/"
-  rm -rf "/home/crusie/3. Code/Régions Inégales/d'entreprises/"
+  rm -rf "{os.path.join(PROJECT, 'firms_raw')}/"
+  rm -rf "{os.path.join(PROJECT, "d'entreprises")}/"
 
 Disk space freed:
   firms_raw/  (metadata only)  ~{meta_size_kb:.0f} KB
@@ -223,5 +223,5 @@ else:
         issues.append("Task 2 (join test) found misaligned keys between the two panels")
     print("\nDO NOT CLEAN UP, issues found:")
     for issue in issues:
-        print(f"  ✗ {issue}")
+        print(f"  FAIL {issue}")
     print("\nResolve the issues above, then re-run this script.")

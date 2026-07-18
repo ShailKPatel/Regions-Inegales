@@ -173,7 +173,7 @@ coef_compare = pd.DataFrame({
 })
 log(coef_compare.to_string())
 
-log("\nC-1 NON-CLUSTERED vs DEPARTMENT-CLUSTERED SE (full panel):")
+log("\nNON-CLUSTERED vs DEPARTMENT-CLUSTERED SE (full panel):")
 for _feat in ["unemployment_rate", "poverty_rate_disp"]:
     log(f"  {_feat}:")
     log(f"    UW non-clustered: coef={_ols_nc_uw.params[_feat]:+.4f}  p={_ols_nc_uw.pvalues[_feat]:.3e}")
@@ -205,7 +205,7 @@ _OPP = ["edu_share_sup", "q2_disp", "pct_urban", "doctor_density_per_100k"]
 _NEC = ["unemployment_rate", "poverty_rate_disp"]
 _OTH = ["gini_disp", "pct_wages"]
 
-log("C-2 IN-SAMPLE vs OOF MEAN |SHAP| COMPARISON:")
+log("IN-SAMPLE vs OOF MEAN |SHAP| COMPARISON:")
 log(f"  {'Feature':<30} {'In-sample':>10} {'OOF':>10}")
 log("  " + "-" * 52)
 for _feat in FEATURES:

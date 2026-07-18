@@ -202,7 +202,7 @@ for codgeo, (label, expected_dep) in SPOT_COMMUNES.items():
     panel_share = float(panel[(panel["dep_code"] == expected_dep) & (panel["year"] == 2022)]["edu_share_sup"].values[0])
 
     commune_pct = round(100.0 * sup22 / den22, 2) if den22 else None
-    print(f"  {codgeo} ({label}): dep_code={dep_found} ✓  "
+    print(f"  {codgeo} ({label}): dep_code={dep_found} OK  "
           f"commune_sup_pct={commune_pct}%  "
           f"dep_share_recomputed={dep_share}%  "
           f"panel_value={panel_share}%  "

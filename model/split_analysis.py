@@ -15,7 +15,6 @@ import statsmodels.api as sm
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import xgboost as xgb
 import shap
 from sklearn.model_selection import GroupKFold
