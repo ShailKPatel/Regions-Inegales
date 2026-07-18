@@ -121,9 +121,9 @@ necessity signature every time (model/findings_informalisation.md):
    coefficient not significant, unweighted (+0.00294, p = 0.158) or
    pop-weighted (+0.00009, p = 0.969). Unemployment does not predict a
    higher individual/micro share.
-3. **Per-capita individual registrations**: SHAP rank 7/8; OLS coefficient
-   negative, unweighted (-0.185, p = 0.079) and pop-weighted (-0.454,
-   p = 0.0010).
+3. **Per-capita individual registrations** (per 100k population): SHAP rank
+   7/8; OLS coefficient negative, unweighted (-18.51, p = 0.079) and
+   pop-weighted (-45.40, p = 0.0010).
 4. **Per-capita company (SARL/SAS) registrations**: SHAP rank 8/8; OLS
    coefficient negative, unweighted (-11.57, p = 0.024) and pop-weighted
    (-20.79, p = 0.0027).
@@ -191,24 +191,43 @@ The rural OLS result is inconclusive and does not support the necessity interpre
 
 Tested whether the necessity/opportunity balance changes across 2012-2021
 using year-interaction terms on the full 960-row panel (not year-by-year
-subsets, which are too small to trust).
+subsets, which are too small to trust). Full detail: model/temporal_findings.md.
 
-- The unemployment necessity channel WEAKENS over the period
-  (unemployment x year, pop-weighted coef = -0.160, p < 0.001; UW coef = -0.083,
-  p = 0.005). As year increases, the unemployment-firm-creation relationship
-  becomes more negative.
-- Opportunity features strengthen: education x year (pop-weighted coef = +0.146,
-  p < 0.001) and income x year (pop-weighted coef = +0.175, p < 0.001) both
-  significant and positive.
-- A clean pre/post test (2012-2014 vs 2019-2021, dropping 2015-2018 for clean
-  separation from the SIDE-affected years) confirms education's growth
-  (edu x late = +2.074, p < 0.001 WT). The late-period intercept shift
-  (firm_rate +1.59 WT, p < 0.001) reflects the general secular rise in registrations.
+**The two necessity features move in opposite directions, both significantly.**
+Unemployment's partial relationship with firm_rate weakens over the period
+(unemployment x year, UW coef = -0.083, p = 0.033; pop-weighted coef = -0.160,
+p < 0.001). But poverty's partial relationship *strengthens* over the same
+period, and more strongly: poverty x year, UW coef = +0.237, p < 0.001;
+pop-weighted coef = +0.287, p < 0.001 -- the single most significant
+interaction term in the whole test. Because poverty and unemployment are
+both NECESSITY features in this project's grouping, it is not accurate to
+say "the necessity channel does not strengthen over the decade": one of
+its two components clearly does.
 
-The opportunity dominance is not a period artifact. The necessity channel does not
-strengthen over the decade. Year-by-year SHAP shares (Test 3) are illustrative:
-single-year models use 96 rows each and are too noisy for inference, but opportunity
-exceeds necessity in all 10 years.
+- Opportunity features also strengthen: education x year (UW coef = +0.071,
+  p = 0.077; pop-weighted coef = +0.146, p < 0.001) and income x year
+  (UW coef = +0.295, p < 0.001; pop-weighted coef = +0.175, p < 0.001), both
+  positive, income significant in both specs.
+- A pre/post test (2012-2014 vs 2019-2021, dropping 2015-2018 for clean
+  separation from the SIDE-affected years) finds *both* unemployment x late
+  (UW coef = +0.356, p = 0.049; pop-weighted coef = +0.720, p = 0.040) and
+  edu x late (UW coef = +1.764, p < 0.001; pop-weighted coef = +2.074,
+  p < 0.001) significant and positive. Poverty was not included as an
+  interaction term in this specific test, so it cannot corroborate or
+  contradict the poverty-strengthens result above. The late-period intercept
+  shift (firm_rate +1.59 WT, p < 0.001) reflects the general secular rise in
+  registrations.
+
+**What holds:** the opportunity > necessity SHAP-share ordering does not
+flip in any of the 10 years (Test 3, descriptive/noisy, 96 rows per
+year-model). **What does not hold:** the claim that the necessity channel
+as a whole is flat over time. Poverty's rising partial association with
+firm_rate over 2012-2021 is a genuine, statistically significant pattern
+in this data and is not resolved by this project's existing robustness
+battery; it is flagged here rather than folded into the unemployment
+result. It should be read alongside the poverty mechanism already flagged
+as unresolved in the Main finding above (informalisation test: MIXED /
+PARTIAL, not a clean confirmation).
 
 ---
 
@@ -283,6 +302,29 @@ model. It remains in the feature matrix; the result is inconclusive.
 8. **Doctor density as amenity proxy.** Physician density is used as a
    quality-of-life proxy for the opportunity environment. Its positive contribution
    captures broader urban amenity endowments, not a direct healthcare effect.
+
+9. **Ecological inference.** The necessity/opportunity framework, as usually
+   stated, is a claim about individual decision-making: why a given person
+   chooses to register a firm. This model only has department-year
+   aggregates. A department-level association between low unemployment and
+   high firm-registration rates cannot distinguish "unemployment doesn't
+   push individuals into entrepreneurship" from purely compositional
+   explanations (e.g. departments with more already-entrepreneurial people
+   sorting into low-unemployment areas for unrelated reasons). The results
+   here support claims about which *kinds of departments* have higher
+   registration rates; they do not, on their own, establish the individual-level
+   push/pull mechanism the necessity/opportunity literature is usually about.
+
+10. **Reverse causality / simultaneity.** The headline necessity-rejection
+    argument leans on unemployment's negative partial coefficient on
+    firm_rate. An untested alternative reading of that same negative sign is
+    that causation runs the other way: departments with more firm creation
+    have more hiring, which mechanically lowers local unemployment. Nothing
+    in this project's design (no instrument, no lagged/pre-determined
+    unemployment measure, no natural experiment) rules this out. The
+    negative unemployment coefficient is consistent with both "necessity-push
+    doesn't operate here" and "entrepreneurship reduces local unemployment,"
+    and this analysis cannot adjudicate between them.
 
 ---
 

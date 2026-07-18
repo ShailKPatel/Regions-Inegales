@@ -335,6 +335,102 @@ edu_t2_wt_c,   edu_t2_wt_p   = t2_results.get("Pop-weighted_edu_share_sup_z_x_la
 late_uw_c,     late_uw_p     = t2_results.get("Unweighted_late", (np.nan, np.nan))
 late_wt_c,     late_wt_p     = t2_results.get("Pop-weighted_late", (np.nan, np.nan))
 
+# ── Build the "Overall Verdict" narrative programmatically from the actual
+# t1_results / t2_results dicts, instead of a hand-written static claim, so
+# the written verdict cannot drift out of sync with the computed numbers.
+def _sig_both(pval_uw, pval_wt, thresh=0.05):
+    return pval_uw < thresh and pval_wt < thresh
+
+def _describe(feat_key, label):
+    res = t1_results[feat_key]
+    direction = "strengthens" if res["coef_uw"] > 0 else "weakens"
+    if _sig_both(res["pval_uw"], res["pval_wt"]):
+        sig = "significantly, in both specs"
+    elif res["pval_uw"] < 0.10 or res["pval_wt"] < 0.10:
+        sig = "at marginal significance in at least one spec"
+    else:
+        sig = "but the interaction is not significant in either spec"
+    return (f"{label} {direction} over 2012-2021 "
+            f"(UW coef={res['coef_uw']:+.4f}, p={res['pval_uw']:.4f}; "
+            f"WLS coef={res['coef_wt']:+.4f}, p={res['pval_wt']:.4f}) -- {sig}.")
+
+unemp_line = _describe("unemployment_rate", "Unemployment's partial relationship with firm_rate")
+pov_line   = _describe("poverty_rate_disp", "Poverty's partial relationship with firm_rate")
+edu_line   = _describe("edu_share_sup",     "Higher-ed share's partial relationship with firm_rate")
+q2_line    = _describe("q2_disp",           "Median income's partial relationship with firm_rate")
+
+unemp_sig  = _sig_both(t1_results["unemployment_rate"]["pval_uw"], t1_results["unemployment_rate"]["pval_wt"])
+pov_sig    = _sig_both(t1_results["poverty_rate_disp"]["pval_uw"], t1_results["poverty_rate_disp"]["pval_wt"])
+unemp_dir  = "weakens" if t1_results["unemployment_rate"]["coef_uw"] < 0 else "strengthens"
+pov_dir    = "strengthens" if t1_results["poverty_rate_disp"]["coef_uw"] > 0 else "weakens"
+
+if unemp_sig and pov_sig and unemp_dir != pov_dir:
+    necessity_summary = (
+        "**The two necessity features move in OPPOSITE directions over time, both "
+        f"significantly.** Unemployment {unemp_dir} as a predictor while poverty "
+        f"{pov_dir} -- the necessity channel as a whole is NOT temporally stable, "
+        "and it is not accurate to say 'necessity does not strengthen': one of its "
+        "two components (poverty) does, clearly and significantly."
+    )
+elif unemp_sig or pov_sig:
+    necessity_summary = (
+        "**At least one necessity feature shows a significant temporal trend.** "
+        "See the per-feature lines above; the necessity channel is not uniformly stable."
+    )
+else:
+    necessity_summary = (
+        "**Neither necessity feature reaches significance in both specs.** "
+        "The necessity channel shows no confirmed temporal trend."
+    )
+
+t2_unemp_sig = _sig_both(unemp_t2_uw_p, unemp_t2_wt_p)
+t2_edu_sig   = _sig_both(edu_t2_uw_p, edu_t2_wt_p)
+t2_summary = (
+    f"Test 2 (pre/post, SIDE-excluded): unemployment x late coef UW={unemp_t2_uw_c:+.4f} "
+    f"(p={unemp_t2_uw_p:.4f}), WLS={unemp_t2_wt_c:+.4f} (p={unemp_t2_wt_p:.4f}) -- "
+    f"{'significant in both specs' if t2_unemp_sig else 'not significant in both specs'}. "
+    f"edu x late coef UW={edu_t2_uw_c:+.4f} (p={edu_t2_uw_p:.4f}), WLS={edu_t2_wt_c:+.4f} "
+    f"(p={edu_t2_wt_p:.4f}) -- {'significant in both specs' if t2_edu_sig else 'not significant in both specs'}. "
+    "Poverty's interaction was not included as a term in Test 2 (only unemployment and "
+    "edu were carried into the pre/post model); Test 2 cannot corroborate or contradict "
+    "Test 1's poverty-strengthening result and should not be read as doing so."
+)
+
+overall_verdict_long = f"""{necessity_summary}
+
+- Test 1 (continuous interaction, the primary statistical test): {unemp_line}
+  {pov_line} {edu_line} {q2_line}
+
+- {t2_summary}
+
+- Test 3 (year-by-year SHAP, descriptive only, 96 rows/year, noisy): opportunity's
+  SHAP share exceeds necessity's in every single year 2012-2021. This part of the
+  original claim holds -- the *opportunity > necessity ordering* does not flip in
+  any year. What does NOT hold is the separate claim that neither necessity
+  feature moves over time: poverty's interaction with year is the single most
+  significant coefficient in the entire Test 1 table.
+
+**Practical implication for the paper:** report the opportunity>necessity
+ordering as stable across all 10 years (Test 3 supports this), but do NOT
+claim the necessity channel itself is flat over time -- poverty's rising
+partial association with firm_rate needs to be stated explicitly, not folded
+into an "unemployment weakens, therefore necessity doesn't strengthen" line."""
+
+if unemp_sig and pov_sig and unemp_dir != pov_dir:
+    caveat_tail = (
+        "That said, both necessity interactions clear significance here despite that "
+        "power constraint, in opposite directions -- so the divergence above is not an "
+        "artifact of insufficient power; if anything, low power would have made it "
+        "harder, not easier, to detect."
+    )
+else:
+    caveat_tail = (
+        "The absence of significant interactions means either (a) there is genuinely no "
+        "temporal trend, or (b) if a trend exists it is smaller than what this dataset "
+        "can detect. Given the 10-year span and 96-dept panel, (a) is the more "
+        "parsimonious interpretation, but it should not be overstated."
+    )
+
 yr_table_rows = "\n".join(
     f"| {yr} | {'SIDE-affected' if yr in SIDE_YEARS else '':<14} | {opp_shares[i]:5.1f}% | {nec_shares[i]:5.1f}% | {opp_shares[i]/nec_shares[i]:.1f}x |"
     for i, yr in enumerate(years)
@@ -427,26 +523,7 @@ expected from sampling noise, not a monotone trend.
 
 ## Overall Verdict
 
-**The necessity vs opportunity balance is stable over 2012-2021.**
-
-- Test 1 (continuous interaction): interaction terms for unemployment and
-  poverty do not reach significance at p < 0.10 in either specification.
-  The necessity channel shows no significant temporal trend, strengthening
-  or weakening.
-
-- Test 2 (pre/post, SIDE-excluded): the necessity x late interaction is
-  consistent with Test 1. Excluding the SIDE-contaminated years does not
-  reveal a hidden trend.
-
-- Test 3 (year-by-year SHAP): opportunity dominates in all 10 years
-  despite 96-row noise per model. No monotone trend is visible in either
-  group's share.
-
-**Practical implication for the paper:** this finding belongs in a
-footnote or robustness subsection, not as a headline result. Report it as:
-"Temporal stability check: year-interaction OLS finds no significant change
-in necessity vs opportunity importance over 2012-2021 (all interaction terms
-p >= 0.10); the cross-sectional opportunity dominance is not a period artefact."
+{overall_verdict_long}
 
 ---
 
@@ -455,11 +532,8 @@ p >= 0.10); the cross-sectional opportunity dominance is not a period artefact."
 The panel's predictive signal is predominantly between-department (~70%
 cross-sectional variance). This structurally limits the power of temporal
 tests: year-on-year variation is small relative to the between-department
-signal, so interaction terms need a large temporal effect to reach
-significance. The absence of significant interactions means either (a) there
-is genuinely no temporal trend, or (b) if a trend exists it is smaller than
-what this dataset can detect. Given the 10-year span and 96-dept panel, (a)
-is the more parsimonious interpretation, but it should not be overstated.
+signal, so a real trend needs a large effect to reach significance here.
+{caveat_tail}
 """
 
 findings_path = f"{MODEL_DIR}/temporal_findings.md"

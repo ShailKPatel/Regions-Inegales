@@ -62,7 +62,7 @@ Auxiliary asset not merged into master: departmental population estimates (`sour
 - SIDE/BURE "all legal registrations" totals run ~2–5% above harmonized INSEE Première figures (which exclude micro enterprises that never trade). This is a definitional difference, not a data error.
 - Sector classification A21 (21 sectors) aggregated to 4 broad groups for panel columns.
 
-**Verification**, Aggregate cross-check: national totals cross-referenced against selected published INSEE Première annual firm-creation figures.
+**Verification**, Internal-consistency cross-check (`scripts/make_side_crosscheck.py` -> `sources/_side_firm_creations_crosscheck.csv`): `total_firm_creations` equals the sum of its own legal-form breakdown (`creations_individual + creations_sarl + creations_sas + creations_other_legal`) and the sum of its own sector breakdown (`creations_sector_industry + ... + creations_sector_services`) in all 960/960 rows, including the 2016-2018 counting-rule reform window (max |diff| = 0 both ways). **This confirms internal arithmetic consistency, not external accuracy.** An external cross-reference against published INSEE Première national annual firm-creation bulletins (the check every other source in this document has) has not been performed, because this environment has no network access to fetch them; national annual totals from this panel are printed by the crosscheck script for a future by-hand comparison against INSEE Première "Démographie des entreprises et des établissements" releases for 2012-2021. Until that comparison is done, treat `total_firm_creations` as internally consistent but not externally verified.
 
 ---
 
