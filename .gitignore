@@ -21,3 +21,8 @@ venv/
 .claude/
 .DS_Store
 CLAUDE.md
+
+# Internal audit / process docs (not for public repo)
+AUDIT.md
+AUDIT_*.md
+*_AUDIT.md

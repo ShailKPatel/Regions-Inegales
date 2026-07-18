@@ -97,26 +97,25 @@ expected from sampling noise, not a monotone trend.
 
 ## Overall Verdict
 
-**The necessity vs opportunity balance is stable over 2012-2021.**
+**The two necessity features move in OPPOSITE directions over time, both significantly.** Unemployment weakens as a predictor while poverty strengthens -- the necessity channel as a whole is NOT temporally stable, and it is not accurate to say 'necessity does not strengthen': one of its two components (poverty) does, clearly and significantly.
 
-- Test 1 (continuous interaction): interaction terms for unemployment and
-  poverty do not reach significance at p < 0.10 in either specification.
-  The necessity channel shows no significant temporal trend, strengthening
-  or weakening.
+- Test 1 (continuous interaction, the primary statistical test): Unemployment's partial relationship with firm_rate weakens over 2012-2021 (UW coef=-0.0829, p=0.0331; WLS coef=-0.1600, p=0.0001) -- significantly, in both specs.
+  Poverty's partial relationship with firm_rate strengthens over 2012-2021 (UW coef=+0.2374, p=0.0000; WLS coef=+0.2869, p=0.0000) -- significantly, in both specs. Higher-ed share's partial relationship with firm_rate strengthens over 2012-2021 (UW coef=+0.0708, p=0.0769; WLS coef=+0.1457, p=0.0000) -- at marginal significance in at least one spec. Median income's partial relationship with firm_rate strengthens over 2012-2021 (UW coef=+0.2951, p=0.0000; WLS coef=+0.1746, p=0.0005) -- significantly, in both specs.
 
-- Test 2 (pre/post, SIDE-excluded): the necessity x late interaction is
-  consistent with Test 1. Excluding the SIDE-contaminated years does not
-  reveal a hidden trend.
+- Test 2 (pre/post, SIDE-excluded): unemployment x late coef UW=+0.3559 (p=0.0485), WLS=+0.7203 (p=0.0400) -- significant in both specs. edu x late coef UW=+1.7642 (p=0.0000), WLS=+2.0736 (p=0.0000) -- significant in both specs. Poverty's interaction was not included as a term in Test 2 (only unemployment and edu were carried into the pre/post model); Test 2 cannot corroborate or contradict Test 1's poverty-strengthening result and should not be read as doing so.
 
-- Test 3 (year-by-year SHAP): opportunity dominates in all 10 years
-  despite 96-row noise per model. No monotone trend is visible in either
-  group's share.
+- Test 3 (year-by-year SHAP, descriptive only, 96 rows/year, noisy): opportunity's
+  SHAP share exceeds necessity's in every single year 2012-2021. This part of the
+  original claim holds -- the *opportunity > necessity ordering* does not flip in
+  any year. What does NOT hold is the separate claim that neither necessity
+  feature moves over time: poverty's interaction with year is the single most
+  significant coefficient in the entire Test 1 table.
 
-**Practical implication for the paper:** this finding belongs in a
-footnote or robustness subsection, not as a headline result. Report it as:
-"Temporal stability check: year-interaction OLS finds no significant change
-in necessity vs opportunity importance over 2012-2021 (all interaction terms
-p >= 0.10); the cross-sectional opportunity dominance is not a period artefact."
+**Practical implication for the paper:** report the opportunity>necessity
+ordering as stable across all 10 years (Test 3 supports this), but do NOT
+claim the necessity channel itself is flat over time -- poverty's rising
+partial association with firm_rate needs to be stated explicitly, not folded
+into an "unemployment weakens, therefore necessity doesn't strengthen" line.
 
 ---
 
@@ -125,8 +124,5 @@ p >= 0.10); the cross-sectional opportunity dominance is not a period artefact."
 The panel's predictive signal is predominantly between-department (~70%
 cross-sectional variance). This structurally limits the power of temporal
 tests: year-on-year variation is small relative to the between-department
-signal, so interaction terms need a large temporal effect to reach
-significance. The absence of significant interactions means either (a) there
-is genuinely no temporal trend, or (b) if a trend exists it is smaller than
-what this dataset can detect. Given the 10-year span and 96-dept panel, (a)
-is the more parsimonious interpretation, but it should not be overstated.
+signal, so a real trend needs a large effect to reach significance here.
+That said, both necessity interactions clear significance here despite that power constraint, in opposite directions -- so the divergence above is not an artifact of insufficient power; if anything, low power would have made it harder, not easier, to detect.

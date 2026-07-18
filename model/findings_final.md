@@ -84,12 +84,20 @@ associated with *lower* predicted firm rates, not higher.
 **Verdict: **REJECTED.** Unemployment correlates *negatively* with firm creation rate (not positively as the necessity hypothesis predicts). OLS: unweighted coef = -0.304 (p=0.044), pop-weighted coef = -0.660 (p=0.001). Higher unemployment does not drive up entrepreneurship; if anything, it accompanies lower firm formation.**
 
 Note on poverty_rate_disp: its positive OLS coefficient and moderate SHAP
-rank do **not** support necessity entrepreneurship. Poverty correlates
-positively with firm creation after controlling for income (q2_disp), but
-this reflects the composition of firm types in poorer areas (more
-micro-enterprises, auto-entrepreneurs), not necessity-push dynamics.
-A positive relationship between poverty and firm registration is consistent
-with *informalisation of labour* rather than genuine opportunity creation.
+rank do **not** support necessity entrepreneurship in the sense of
+unemployment-driven push, since unemployment itself carries no such
+signal. The informalisation-of-labour explanation for poverty's positive
+coefficient (more individual/micro-entrepreneur registrations in poorer
+areas, rather than genuine opportunity creation) was tested directly in
+model/informalisation_model.py and model/percapita_decomposition.py.
+The result is **MIXED/INCONCLUSIVE** at the registration-share level and
+**PARTIAL** at the per-capita decomposition level: poverty raises
+individual/micro per-capita registrations more than company registrations,
+but company (SARL/SAS) registrations also rise significantly with
+poverty, so informalisation does not fully account for the effect. See
+model/findings_informalisation.md for the full test; the mechanism behind
+poverty's positive coefficient remains partially unresolved and should
+not be asserted as settled.
 
 ---
 
