@@ -129,7 +129,8 @@ st.plotly_chart(fig_hero, use_container_width=True)
 st.markdown(
     "This runs against the necessity-entrepreneurship hypothesis, which holds that unemployment "
     "and hardship push people into self-employment. In French departments, the opposite pattern dominates. "
-    "This pattern holds across the period: the necessity channel does not strengthen over 2012-2021, it weakens."
+    "The picture is mixed across the period: unemployment's link to firm creation weakens over 2012-2021, "
+    "but poverty's link strengthens, so the necessity channel as a whole does not simply fade."
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -137,7 +138,7 @@ st.markdown('<h3 class="ri-section-h">Robustness</h3>', unsafe_allow_html=True)
 st.markdown(
     """
 - **Urban vs rural:** opportunity dominates in both density subsets. Rural departments show a 4.19× Opp/Nec ratio, higher than urban (1.95×), the opposite of what a necessity account predicts.
-- **Over time:** unemployment's relationship with firm creation weakens across 2012–2021. Opportunity features (income, education) strengthen. The finding is not a period artefact.
+- **Over time:** unemployment's link to firm creation weakens across 2012–2021, but poverty's link strengthens (both p<0.001) — the two necessity features move in opposite directions. Opportunity features also strengthen. The opportunity > necessity ranking holds in all 10 individual years.
 - **OLS confirmation:** unemployment rate runs **negative** in both unweighted (coef = −0.30, p = 0.044) and population-weighted (coef = −0.66, p = 0.001) OLS specs. Higher unemployment accompanies fewer firms, not more.
 """
 )
