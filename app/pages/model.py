@@ -213,11 +213,12 @@ st.markdown(
 )
 
 st.markdown(
-    "**Necessity over time:** year-interaction OLS on the full 960-row panel shows "
-    "the unemployment channel weakening (unemployment × year p = 0.005 UW, p < 0.001 WT; "
-    "coef = −0.083 per year), while opportunity features strengthen "
-    "(income × year and edu × year both significant). "
-    "Opportunity dominates in all 10 year-by-year SHAP models."
+    "**Necessity over time — mixed:** year-interaction OLS on the full 960-row panel shows "
+    "unemployment weakening (unemployment × year p = 0.033 UW, p < 0.001 WT; coef = −0.083 per year) "
+    "while poverty strengthens (poverty × year p < 0.001 both specs; coef = +0.237 UW). The two "
+    "necessity features move in opposite directions, so the necessity channel as a whole is not "
+    "simply flat or fading. Opportunity features also strengthen (income × year and edu × year "
+    "both significant). Opportunity dominates in all 10 year-by-year SHAP models regardless."
 )
 
 st.divider()
@@ -226,6 +227,29 @@ st.markdown('<h3 class="ri-section-h">Additional tests</h3>', unsafe_allow_html=
 st.markdown(
     """
 - **Inequality (Gini)** was tested as a predictor and found inconclusive: it ranks 5th of 8, its importance weakens when Île-de-France is excluded, and its sign depends on the weighting scheme.
+"""
+)
+
+st.divider()
+
+st.markdown('<h3 class="ri-section-h">Cross-model robustness</h3>', unsafe_allow_html=True)
+st.markdown(
+    "Four models — ElasticNetCV, RandomForest, LightGBM, XGBoost — were retrained on the identical "
+    "8-feature matrix and identical LODO folds (GroupKFold, 96 departments). Top-3 features "
+    "(higher-ed share, median income, poverty rate) agree across all four, and unemployment ranks "
+    "in the bottom half for every model. Minimum pairwise Spearman rank correlation across the four "
+    "models: +0.81. On pooled out-of-fold predictions, ElasticNetCV (linear) generalizes best "
+    "(R² = 0.714), ahead of tuned XGBoost (R² = 0.676), LightGBM (R² = 0.634), and RandomForest "
+    "(R² = 0.647) — findings don't depend on tree-model nonlinearity."
+)
+st.markdown(
+    """
+| Model | LODO R² | Top-3 match | Unemployment rank (of 8) |
+|---|---|---|---|
+| ElasticNetCV | 0.714 | Yes | 6 |
+| XGBoost | 0.676 | Yes | 7 |
+| RandomForest | 0.647 | Yes | 8 |
+| LightGBM | 0.634 | Yes | 8 |
 """
 )
 

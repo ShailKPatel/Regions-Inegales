@@ -48,10 +48,13 @@ SOURCES = [
         "desc":       (
             "Total firm creations per department per year (2012-2021); legal-form breakdown "
             "(individual entrepreneur, SARL, SAS, other). "
-            "SIDE/BURE totals run ~2-5% above harmonized INSEE Première figures "
-            "(definitional difference, not a data error). "
-            "<b>Verification:</b> aggregate cross-check against selected published INSEE "
-            "Première annual figures."
+            "Apparent gaps against published INSEE Première figures are an INSEE vintage/revision "
+            "effect (late SIRENE registrations get backdated, so early headline totals undershoot), "
+            "not a definitional difference. Against restated totals our panel runs 2.6-3.6% below "
+            "the national figure, consistent with a stable DOM/Mayotte share. "
+            "<b>Verification:</b> external anchor against published INSEE Première totals, "
+            "CONSISTENT for all 10 years (2012-2021); DOM/Mayotte share stable within 2.6-3.6pp "
+            "across the decade."
         ),
     },
     {
