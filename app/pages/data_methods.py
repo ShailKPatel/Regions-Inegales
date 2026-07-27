@@ -247,6 +247,23 @@ LIMITATIONS = [
         "Physician density is used as a quality-of-life proxy for the opportunity environment. Its positive "
         "contribution captures broader urban amenity endowments, not a direct healthcare effect.",
     ),
+    (
+        "Ecological inference.",
+        "The necessity/opportunity framework is usually a claim about individual decision-making, but this "
+        "model only has department-year aggregates. A department-level association between low unemployment "
+        "and high firm-registration rates cannot distinguish 'unemployment doesn't push individuals into "
+        "entrepreneurship' from purely compositional explanations. Results support claims about which kinds "
+        "of departments have higher registration rates, not the individual-level mechanism.",
+    ),
+    (
+        "Reverse causality / simultaneity.",
+        "The negative unemployment coefficient could reflect firm creation lowering local unemployment "
+        "rather than the reverse. A lagged test (unemployment_rate at t-1 predicting firm_rate at t, "
+        "864-row 2013–2021 subset) found the coefficient stayed negative and slightly larger, not smaller "
+        "(unweighted -0.296 vs -0.241 same-year; population-weighted -0.650 vs -0.592 same-year, remaining "
+        "significant), which weakens but does not resolve the concern: no instrument or natural experiment "
+        "is used, so a strict causal claim remains out of reach.",
+    ),
 ]
 
 items = "".join(
