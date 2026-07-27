@@ -109,7 +109,8 @@ OLS partial regression (department-clustered SE) confirms: unemployment correlat
 negatively with firm creation rates in both the unweighted spec (coef = -0.304,
 p = 0.044) and strongly so in the population-weighted spec (coef = -0.660,
 p = 0.001). Higher unemployment does not drive up entrepreneurship; it accompanies
-lower firm formation.
+lower firm formation. (A lagged-unemployment robustness check bearing on the
+reverse-causality reading of this coefficient is summarized in Limitation 10.)
 
 Unemployment was tested four ways, not just on the main model, and fails the
 necessity signature every time (model/findings_informalisation.md):
@@ -360,14 +361,26 @@ model. It remains in the feature matrix; the result is inconclusive.
 
 10. **Reverse causality / simultaneity.** The headline necessity-rejection
     argument leans on unemployment's negative partial coefficient on
-    firm_rate. An untested alternative reading of that same negative sign is
-    that causation runs the other way: departments with more firm creation
-    have more hiring, which mechanically lowers local unemployment. Nothing
-    in this project's design (no instrument, no lagged/pre-determined
-    unemployment measure, no natural experiment) rules this out. The
-    negative unemployment coefficient is consistent with both "necessity-push
-    doesn't operate here" and "entrepreneurship reduces local unemployment,"
-    and this analysis cannot adjudicate between them.
+    firm_rate. An alternative reading of that same negative sign is that
+    causation runs the other way: departments with more firm creation have
+    more hiring, which mechanically lowers local unemployment. A lagged test
+    (model/findings_lagged_robustness.md) speaks to this directly: on the
+    864-row 2013-2021 subset (2012 dropped for lack of a 2011 lag),
+    replacing unemployment_rate(t) with unemployment_rate(t-1) in the
+    identical 8-feature specification, the coefficient stayed negative and
+    grew slightly larger rather than shrinking toward zero, unweighted moved
+    from -0.2405 (p=0.148) same-year to -0.2961 (p=0.057) lagged, and
+    population-weighted moved from -0.5917 (p=0.006) same-year to -0.6501
+    (p=0.001) lagged, remaining significant. Since firm_rate(t) cannot cause
+    unemployment_rate(t-1), it hasn't happened yet, this weakens the
+    pure-simultaneity account of the same-year negative coefficient. It does
+    not resolve the concern: a department with unemployment structurally
+    declining for reasons unrelated to entrepreneurship (an unrelated local
+    industry boom, for instance) could still produce the same lagged
+    pattern, since a one-year lag is not a true instrument. This project
+    still has no instrument and no natural experiment, so a strict causal
+    claim remains out of reach; the lagged result narrows, but does not
+    close, the range of readings consistent with the negative coefficient.
 
 ---
 
