@@ -57,6 +57,8 @@ XGBoost trained on 8 structural predictors. SHAP (SHapley Additive exPlanations)
 
 ★ Primary result. KFold is a leaky baseline: departments appear in both train and test sets.
 
+A 4-model comparison on identical folds finds ElasticNetCV generalizes better than XGBoost (LODO R2 0.7142 vs 0.6759); see [FINDINGS.md](FINDINGS.md#robustness-does-a-simpler-model-find-the-same-thing) for why XGBoost is still the headline model.
+
 ## Repository layout
 
 ```

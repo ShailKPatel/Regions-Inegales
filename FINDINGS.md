@@ -249,6 +249,49 @@ Two further checks were run (model/findings_diagnostics.md):
 
 ---
 
+## Robustness: does a simpler model find the same thing?
+
+Reviewer question: would a plain linear model, with no tree structure and no
+SHAP, reach the same conclusion? Four models (ElasticNetCV, RandomForest,
+LightGBM, XGBoost) were trained on the identical 8-feature locked matrix,
+identical target, and identical LODO folds (GroupKFold, 96 splits, grouped
+on dep_code) used throughout this document, each given a fair tuning budget
+(model/model_comparison.py; full breakdown in
+model/findings_model_comparison.md).
+
+Stated plainly: ElasticNetCV generalizes better than tuned XGBoost on these
+folds. LODO R2 = 0.7142 for ElasticNetCV versus 0.6759 for tuned XGBoost.
+XGBoost is not the best-generalizing model on this panel for raw predictive
+accuracy.
+
+XGBoost remains the headline model in this document anyway, for three
+reasons. First, the feature-attribution story throughout this document is
+built on tree-based SHAP; moving the headline to a linear model would mean
+rebuilding that attribution machinery from scratch, not swapping one line of
+code. Second, the full robustness battery above (urban/rural split,
+Ile-de-France drop, log-population control, dropping 2012, the temporal
+interaction tests) was run against the XGBoost pipeline; re-deriving all of
+it for ElasticNet is out of scope for this project. Third, what this
+document actually claims is that opportunity factors dominate and
+unemployment is weak, not that XGBoost is the best predictive model, and
+that qualitative claim is what the four-model comparison actually bears on.
+
+That comparison is the real robustness evidence, and it points the other
+way from the R2 gap: all four models, including the linear one, agree on
+the same top-3 features (higher-ed share, median income, poverty rate),
+unemployment lands in the bottom half of importance for all four, and the
+minimum pairwise Spearman rank correlation across all six model pairs is
++0.81. A finding that survives a switch from gradient-boosted trees to a
+plain linear model is better supported than one that only appears under one
+model family. That agreement, not the R2 comparison, is what should
+reassure a reader that the opportunity-over-necessity result is not an
+XGBoost artefact.
+
+Full breakdown, including per-model tuning grids and the rank matrix:
+model/findings_model_comparison.md.
+
+---
+
 ## What did not work
 
 **Gini coefficient**: tested as a predictor. Ranks 5th of 8 (mean |SHAP| = 0.410).
