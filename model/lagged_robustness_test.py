@@ -74,6 +74,22 @@ assert len(df_lag) == 864, f"expected 864 rows, got {len(df_lag)}"
 r("Row count assertion PASSED: 864 (96 departments x 9 years, 2013-2021).")
 r()
 
+# ── STEP 2b: lag-1 autocorrelation ─────────────────────────────────────────
+# The lagged test's power to speak to reverse causality depends on
+# unemployment_rate(t) and unemployment_rate(t-1) actually differing.
+# If they are near-identical (high persistence), a "similar coefficient
+# under the lag" result is weak evidence either way, it could just mean
+# the lag is a near-copy of the same-year value, not a genuinely different
+# regressor.
+unemp_autocorr = df_lag["unemployment_rate"].corr(df_lag["unemployment_rate_lag1"])
+pov_autocorr   = df_lag["poverty_rate_disp"].corr(df_lag["poverty_rate_disp_lag1"])
+r("=" * 72)
+r("STEP 2b, LAG-1 AUTOCORRELATION (pooled, 864 rows)")
+r("=" * 72)
+r(f"corr(unemployment_rate[t], unemployment_rate[t-1]) = {unemp_autocorr:.4f}")
+r(f"corr(poverty_rate_disp[t], poverty_rate_disp[t-1])  = {pov_autocorr:.4f}")
+r()
+
 groups_dep = df_lag["dep_code"].values
 weights    = df_lag["pop_jan1"].values
 y          = df_lag[TARGET].copy()
@@ -251,6 +267,16 @@ dropped since no 2011 data exists in the panel.
 
 **Rows after building the lag and dropping 2012: {len(df_lag)}** (96 departments x
 9 years, 2013-2021). Row-count assertion passed.
+
+---
+
+## Lag-1 autocorrelation
+
+corr(unemployment_rate[t], unemployment_rate[t-1]) = **{unemp_autocorr:.4f}**
+corr(poverty_rate_disp[t], poverty_rate_disp[t-1]) = **{pov_autocorr:.4f}**
+
+Read: unemployment_rate is {"highly persistent year-to-year" if unemp_autocorr > 0.9 else "moderately persistent year-to-year" if unemp_autocorr > 0.7 else "not strongly persistent year-to-year"}
+(r={unemp_autocorr:.3f}). {"This caps how much this test can prove: with lag1 this close to the same-year value, a 'coefficient survives lagging' result is expected even under pure simultaneity, since lag1 is nearly a relabeled copy of the same-year regressor for most department-years. The lagged test below is still directionally informative (a true sign flip or collapse to zero would still be meaningful) but should not be read as a strong reverse-causality test on its own." if unemp_autocorr > 0.85 else "This leaves meaningful room between the same-year and lagged values, so the lagged test below carries more genuine identifying power than a highly-persistent series would."}
 
 ---
 

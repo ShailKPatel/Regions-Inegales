@@ -30,6 +30,16 @@ dropped since no 2011 data exists in the panel.
 
 ---
 
+## Lag-1 autocorrelation
+
+corr(unemployment_rate[t], unemployment_rate[t-1]) = **0.9777**
+corr(poverty_rate_disp[t], poverty_rate_disp[t-1]) = **0.9942**
+
+Read: unemployment_rate is highly persistent year-to-year
+(r=0.978). This caps how much this test can prove: with lag1 this close to the same-year value, a 'coefficient survives lagging' result is expected even under pure simultaneity, since lag1 is nearly a relabeled copy of the same-year regressor for most department-years. The lagged test below is still directionally informative (a true sign flip or collapse to zero would still be meaningful) but should not be read as a strong reverse-causality test on its own.
+
+---
+
 ## Primary test: unemployment, same-year vs lagged
 
 Full locked 8-feature matrix (q2_disp, gini_disp, poverty_rate_disp,
@@ -82,6 +92,12 @@ STEP 2, BUILD LAGGED COLUMNS
 Rows with valid lag (2013-2021): 864
 Method: for each (dep_code, year), lag1 = value at (dep_code, year-1), built via a merge keyed on dep_code, not row order. 2012 rows dropped (no 2011 data in panel).
 Row count assertion PASSED: 864 (96 departments x 9 years, 2013-2021).
+
+========================================================================
+STEP 2b, LAG-1 AUTOCORRELATION (pooled, 864 rows)
+========================================================================
+corr(unemployment_rate[t], unemployment_rate[t-1]) = 0.9777
+corr(poverty_rate_disp[t], poverty_rate_disp[t-1])  = 0.9942
 
 ========================================================================
 STEP 3a, SAME-YEAR BASELINE (864 rows, contemporaneous unemployment)

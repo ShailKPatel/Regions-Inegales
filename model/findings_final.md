@@ -63,6 +63,16 @@ honest: departments have persistent idiosyncrasies not fully captured by
 the 8-feature matrix. We report LODO as the headline and label it
 "generalization to unseen departments."
 
+**LOYO, 2021 fold isolated.** Limitation 5 flags that `edu_share_sup`'s
+2022 census anchor lies outside the panel, so 2017-2021 values embed
+future information and the 2021 LOYO test fold is "mildly contaminated."
+Quantified here: LOYO R² over all 10 year-folds is 0.929; recomputed
+over the same out-of-fold predictions with the 2021 fold excluded, LOYO
+R² is 0.936 (MAE 0.6714 vs 0.7564 full).
+The 2021 fold is not doing outsized work, the excl.-2021 number stays close to the full LOYO figure.
+LOYO is not the headline validation scheme regardless (LODO is), this is a
+Limitation 5 diagnostic, not a robustness claim about the main result.
+
 ---
 
 ## Necessity-Model Direct Test
@@ -82,6 +92,26 @@ associated with *lower* predicted firm rates, not higher.
 | OLS pop-weighted | -0.6599 | 0.0007 | +0.8593 | 2.98e-12 |
 
 **Verdict: **REJECTED.** Unemployment correlates *negatively* with firm creation rate (not positively as the necessity hypothesis predicts). OLS: unweighted coef = -0.304 (p=0.044), pop-weighted coef = -0.660 (p=0.001). Higher unemployment does not drive up entrepreneurship; if anything, it accompanies lower firm formation.**
+
+#### Full 8-feature coefficient table
+
+The unemployment/poverty rows above are pulled from a regression that
+already includes all 8 locked features; the other 6 coefficients were
+fitted but previously not reported. Full table, department-clustered SE,
+same two specs, same 960-row sample:
+
+| Feature | Group | UW coef | UW p | WT coef | WT p |
+|---|---|---|---|---|---|
+| Median income | Opportunity | +0.0009 | 8.689e-08 | +0.0011 | 4.661e-05 |
+| Gini coefficient | Other | +6.2095 | 5.505e-01 | -11.9444 | 4.086e-01 |
+| Poverty rate | Necessity | +0.5968 | 2.766e-09 | +0.8593 | 2.985e-12 |
+| Unemployment rate | Necessity | -0.3038 | 4.380e-02 | -0.6599 | 7.403e-04 |
+| Doctor density | Opportunity | +0.0058 | 1.821e-01 | +0.0113 | 3.453e-02 |
+| Higher-ed share | Opportunity | +0.2041 | 4.864e-03 | +0.1579 | 6.331e-02 |
+| % Urban | Opportunity | +0.0210 | 2.902e-01 | +0.0160 | 5.269e-01 |
+| Wage income share | Other | -0.1531 | 5.549e-03 | -0.1482 | 3.553e-02 |
+
+R² (UW) = 0.7637, R² (WT) = 0.8188, N = 960.
 
 Note on poverty_rate_disp: its positive OLS coefficient and moderate SHAP
 rank do **not** support necessity entrepreneurship in the sense of

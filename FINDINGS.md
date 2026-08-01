@@ -53,6 +53,23 @@ variables (higher-ed share, median disposable income, percent urban, doctor
 density per 100k), two necessity variables (unemployment rate, poverty rate), and
 two controls (Gini coefficient, wage income share).
 
+**Higher-ed share is 90% interpolated.** `edu_share_sup` is observed at only
+three census snapshots (2011, 2016, 2022); within the 2012-2021 panel, only
+year 2016 (96 of 960 cells) is a real observation, the other 864 cells (9 of
+10 years) are linearly interpolated between anchors. Linear interpolation
+between two points per department produces a value that is close to a
+straight-line function of department identity, i.e. close to a
+cross-sectional variable rather than a genuinely time-varying one. This
+matters because `edu_share_sup` is one of the two features carrying the
+headline result (second-highest SHAP, 1.0505, of 8 features) in a panel
+where ~70% of predictive variance is already between-department rather
+than within-department (Limitation 2). The cross-sectional reading of the
+main finding ("higher-education departments create more firms") is not
+weakened by this. The temporal reading ("rising education raises firm
+creation") should be treated with more caution than the SHAP number alone
+implies, there is little genuine year-to-year variation in this variable
+for the model to have learned that pattern from. See Limitation 5.
+
 Model: XGBoost trained on 960 department-years. SHAP (SHapley Additive
 exPlanations) used to measure each variable's average contribution to predictions.
 
@@ -111,6 +128,30 @@ p = 0.044) and strongly so in the population-weighted spec (coef = -0.660,
 p = 0.001). Higher unemployment does not drive up entrepreneurship; it accompanies
 lower firm formation. (A lagged-unemployment robustness check bearing on the
 reverse-causality reading of this coefficient is summarized in Limitation 10.)
+
+The unemployment/poverty rows above come from a regression that already
+includes all 8 locked features; the full coefficient table (department-clustered
+SE, same 960-row sample) is:
+
+| Feature | Group | UW coef | UW p | WT coef | WT p |
+|---|---|---|---|---|---|
+| Median income | Opportunity | +0.0009 | 8.69e-08 | +0.0011 | 4.66e-05 |
+| Gini coefficient | Other | +6.2095 | 0.551 | -11.9444 | 0.409 |
+| Poverty rate | Necessity | +0.5968 | 2.77e-09 | +0.8593 | 2.98e-12 |
+| Unemployment rate | Necessity | -0.3038 | 0.044 | -0.6599 | 7.40e-04 |
+| Doctor density | Opportunity | +0.0058 | 0.182 | +0.0113 | 0.035 |
+| Higher-ed share | Opportunity | +0.2041 | 0.005 | +0.1579 | 0.063 |
+| % Urban | Opportunity | +0.0210 | 0.290 | +0.0160 | 0.527 |
+| Wage income share | Other | -0.1531 | 0.006 | -0.1482 | 0.036 |
+
+R² (UW) = 0.7637, R² (WT) = 0.8188, N = 960. Full breakdown:
+model/findings_final.md. Reading it: opportunity-group coefficients are
+mostly positive and significant or near-significant (income, education,
+doctor density under weighting), % urban is the exception, not significant
+in either spec despite carrying an opportunity-group SHAP contribution,
+consistent with Limitation 6 (pct_urban is time-invariant, cross-sectional
+signal only). Gini stays non-significant in both specs, consistent with
+the "inconclusive" read already given to it elsewhere in this document.
 
 Unemployment was tested four ways, not just on the main model, and fails the
 necessity signature every time (model/findings_informalisation.md):
@@ -256,9 +297,26 @@ Reviewer question: would a plain linear model, with no tree structure and no
 SHAP, reach the same conclusion? Four models (ElasticNetCV, RandomForest,
 LightGBM, XGBoost) were trained on the identical 8-feature locked matrix,
 identical target, and identical LODO folds (GroupKFold, 96 splits, grouped
-on dep_code) used throughout this document, each given a fair tuning budget
-(model/model_comparison.py; full breakdown in
-model/findings_model_comparison.md).
+on dep_code) used throughout this document (model/model_comparison.py; full
+breakdown in model/findings_model_comparison.md).
+
+**Tuning budget is not identical across model families, stated plainly
+rather than left implicit.** ElasticNetCV gets its own native exhaustive
+alpha/l1_ratio path search over its 2 hyperparameters, standard practice
+for that estimator. The three tree models (RandomForest, LightGBM,
+XGBoost) each get a `RandomizedSearchCV` budget of `n_iter=4` draws from a
+36-point grid (3 max_depth × 4 learning_rate × 3 n_estimators, or the
+RandomForest equivalent), i.e. roughly 11% of their own grid, sampled per
+outer fold from train-only inner CV. This is not an oversight, running an
+exhaustive 36-point search inside all 96 outer LODO folds for three tree
+models was priced out as a multi-hour job (Section 2 timing note in
+model/findings_model_comparison.md); n_iter=4 was chosen to keep the full
+comparison tractable. The asymmetry means the tree models' reported LODO
+R2 is a lower bound on what more exhaustive tuning might reach, not their
+ceiling. What the asymmetry does not touch: the qualitative result below
+(feature ranking, unemployment's bottom-half position, cross-model
+agreement) held before this caveat was written up and is independent of
+how much further tree tuning could close the R2 gap.
 
 Stated plainly: ElasticNetCV generalizes better than tuned XGBoost on these
 folds. LODO R2 = 0.7142 for ElasticNetCV versus 0.6759 for tuned XGBoost.
@@ -328,11 +386,28 @@ model. It remains in the feature matrix; the result is inconclusive.
    design is applied. The model shows which departmental characteristics predict
    firm-creation rates, not what would change if those characteristics changed.
 
-5. **Education interpolated against a post-panel anchor.** Higher-ed share is
-   observed at census snapshots (2011, 2016, 2022) and linearly interpolated.
-   The 2022 anchor lies outside the panel window, so 2017–2021 values embed
-   future information. The LOYO 2021 fold is mildly contaminated; year-to-year
-   variation in this variable is artificial by construction.
+5. **Education interpolated against a post-panel anchor.** The higher
+   education share is not observed annually. It is linearly interpolated
+   between three census anchors (2011, 2016 and 2022), so 864 of 960
+   department-year values are constructed and only the 96 values for 2016
+   are direct observations. Interpolation removes idiosyncratic year-to-year
+   variation, leaving a variable that is close to a department-level mean
+   plus a smooth trend. Its contribution should therefore be read as
+   cross-sectional, consistent with the paper's framing throughout, and not
+   as evidence that changes in local education drive changes in firm
+   creation. The 2022 anchor also lies outside the panel window, so values
+   from 2017 onward embed information from beyond the observation period;
+   the leave-one-year-out 2021 fold is contaminated on this account.
+   Quantified: full-panel LOYO R² = 0.929; recomputed over the same
+   out-of-fold predictions with the 2021 fold excluded, LOYO R² = 0.936
+   (MAE 0.6714 vs 0.7564 full, model/findings_final.md). The excl.-2021
+   number is not lower than the full figure, if anything marginally
+   higher, so the 2021 fold does not appear to be an outlier that is
+   inflating the reported LOYO score. This does not clear the underlying
+   concern (2017-2021 values still embed post-panel information by
+   construction), but it means the contamination is not visibly showing
+   up as an anomalously easy test fold. LOYO is not this project's
+   headline validation scheme in any case (LODO is).
 
 6. **pct_urban is a single-vintage time-invariant classification.** The density
    classification (Grille de densité, RP2021/2025 vintage) is applied uniformly
@@ -381,6 +456,19 @@ model. It remains in the feature matrix; the result is inconclusive.
     still has no instrument and no natural experiment, so a strict causal
     claim remains out of reach; the lagged result narrows, but does not
     close, the range of readings consistent with the negative coefficient.
+    **How much weight the lagged test can bear:** unemployment_rate(t) and
+    unemployment_rate(t-1) correlate at r=0.9777 pooled across the 864-row
+    subset (model/findings_lagged_robustness.md). Unemployment is highly
+    persistent year-to-year, so for most department-years the lag is close
+    to a relabeled copy of the same-year value, not a genuinely different
+    regressor. That caps the test's power: a coefficient surviving the lag
+    is expected under high persistence even if the same-year result were
+    partly simultaneity, so this should be read as a mild, not a strong,
+    mitigation of the reverse-causality concern. A true sign flip or
+    collapse toward zero under lagging would still have been meaningful
+    evidence against the negative-coefficient reading; that it did not
+    happen is worth reporting, but the high autocorrelation means its
+    absence proves less than it would for a more volatile variable.
 
 ---
 

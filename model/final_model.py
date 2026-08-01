@@ -139,8 +139,24 @@ lodo_splits  = list(gkf.split(X, y, groups=groups_dep))
 kfold_splits = list(KFold(n_splits=10, shuffle=True, random_state=RNG).split(X, y))
 
 r("Running LOYO ...")
-r2_loyo,  mae_loyo  = run_cv(X, y, loyo_splits)
+oof_loyo = np.full(len(y), np.nan)
+for _tr, _te in loyo_splits:
+    oof_loyo[_te] = fit_predict_oof(X, y, _tr, _te)
+r2_loyo  = r2_score(y, oof_loyo)
+mae_loyo = mean_absolute_error(y, oof_loyo)
 r(f"  LOYO  R²={r2_loyo:.3f}  MAE={mae_loyo:.4f}")
+
+# Limitation 5 quantification: edu_share_sup's 2022 census anchor lies outside
+# the panel, so the 2021 LOYO test fold is trained partly on interpolated
+# values that lean on future information. Recompute R²/MAE over the same OOF
+# predictions with the 2021 fold's rows excluded, to see how much of LOYO's
+# headline number that fold is carrying.
+_mask_no2021  = (groups_year != 2021)
+r2_loyo_no21  = r2_score(y[_mask_no2021], oof_loyo[_mask_no2021])
+mae_loyo_no21 = mean_absolute_error(y[_mask_no2021], oof_loyo[_mask_no2021])
+r(f"  LOYO, excl. 2021 fold  R²={r2_loyo_no21:.3f}  MAE={mae_loyo_no21:.4f}  "
+  f"(quantifies Limitation 5's post-panel education anchor concern)")
+r()
 r("Running LODO (96 folds) ...")
 r2_lodo,  mae_lodo  = run_cv(X, y, lodo_splits)
 r(f"  LODO  R²={r2_lodo:.3f}  MAE={mae_lodo:.4f}")
@@ -245,6 +261,26 @@ r(f"  Pop-weighted: coef={unemp_coef_wt:+.4f}, p={unemp_pval_wt:.4f}")
 r("OLS poverty_rate_disp (department-clustered SE):")
 r(f"  Unweighted: coef={pov_coef_uw:+.4f}, p={pov_pval_uw:.4e}")
 r(f"  Pop-weighted: coef={pov_coef_wt:+.4f}, p={pov_pval_wt:.4e}")
+r()
+
+# full 8-coefficient table (all features, not just unemployment/poverty),
+# department-clustered SE, both specs -- ols_uw/ols_wt are already fitted
+# on the full FEATURES matrix, this just surfaces the rest of .params
+FULL_OLS_ROWS = []
+r("FULL OLS COEFFICIENT TABLE, all 8 features (department-clustered SE):")
+for _feat in FEATURES:
+    _row = dict(
+        feature=_feat,
+        display=FEATURE_DISPLAY[_feat],
+        uw_coef=ols_uw.params[_feat], uw_p=ols_uw.pvalues[_feat],
+        wt_coef=ols_wt.params[_feat], wt_p=ols_wt.pvalues[_feat],
+    )
+    FULL_OLS_ROWS.append(_row)
+    r(f"  {_feat:<26} UW coef={_row['uw_coef']:+.4f} p={_row['uw_p']:.3e}   "
+      f"WT coef={_row['wt_coef']:+.4f} p={_row['wt_p']:.3e}")
+r(f"  const                      UW coef={ols_uw.params['const']:+.4f} p={ols_uw.pvalues['const']:.3e}   "
+  f"WT coef={ols_wt.params['const']:+.4f} p={ols_wt.pvalues['const']:.3e}")
+r(f"  R² (UW)={ols_uw.rsquared:.4f}  R² (WT)={ols_wt.rsquared:.4f}  N={int(ols_uw.nobs)}")
 r()
 
 # ── STEP 6: Robustness, drop Île-de-France ────────────────────────────────
@@ -553,6 +589,16 @@ honest: departments have persistent idiosyncrasies not fully captured by
 the 8-feature matrix. We report LODO as the headline and label it
 "generalization to unseen departments."
 
+**LOYO, 2021 fold isolated.** Limitation 5 flags that `edu_share_sup`'s
+2022 census anchor lies outside the panel, so 2017-2021 values embed
+future information and the 2021 LOYO test fold is "mildly contaminated."
+Quantified here: LOYO R² over all 10 year-folds is {r2_loyo:.3f}; recomputed
+over the same out-of-fold predictions with the 2021 fold excluded, LOYO
+R² is {r2_loyo_no21:.3f} (MAE {mae_loyo_no21:.4f} vs {mae_loyo:.4f} full).
+{"The 2021 fold is not doing outsized work, the excl.-2021 number stays close to the full LOYO figure." if abs(r2_loyo_no21 - r2_loyo) < 0.02 else "The gap between the two is large enough that the 2021 fold's education-interpolation contamination is materially inflating (or deflating) the headline LOYO number, treat LOYO with the excl.-2021 figure in mind."}
+LOYO is not the headline validation scheme regardless (LODO is), this is a
+Limitation 5 diagnostic, not a robustness claim about the main result.
+
 ---
 
 ## Necessity-Model Direct Test
@@ -572,6 +618,18 @@ associated with *lower* predicted firm rates, not higher.
 | OLS pop-weighted | {unemp_coef_wt:+.4f} | {unemp_pval_wt:.4f} | {pov_coef_wt:+.4f} | {pov_pval_wt:.2e} |
 
 **Verdict: {nec_verdict}**
+
+#### Full 8-feature coefficient table
+
+The unemployment/poverty rows above are pulled from a regression that
+already includes all 8 locked features; the other 6 coefficients were
+fitted but previously not reported. Full table, department-clustered SE,
+same two specs, same 960-row sample:
+
+| Feature | Group | UW coef | UW p | WT coef | WT p |
+|---|---|---|---|---|---|
+{"".join(f"| {_row['display']} | {GROUP_LABEL[_row['feature']]} | {_row['uw_coef']:+.4f} | {_row['uw_p']:.3e} | {_row['wt_coef']:+.4f} | {_row['wt_p']:.3e} |" + chr(10) for _row in FULL_OLS_ROWS)}
+R² (UW) = {ols_uw.rsquared:.4f}, R² (WT) = {ols_wt.rsquared:.4f}, N = {int(ols_uw.nobs)}.
 
 Note on poverty_rate_disp: its positive OLS coefficient and moderate SHAP
 rank do **not** support necessity entrepreneurship in the sense of
