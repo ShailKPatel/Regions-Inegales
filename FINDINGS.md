@@ -145,13 +145,21 @@ SE, same 960-row sample) is:
 | Wage income share | Other | -0.1531 | 0.006 | -0.1482 | 0.036 |
 
 R² (UW) = 0.7637, R² (WT) = 0.8188, N = 960. Full breakdown:
-model/findings_final.md. Reading it: opportunity-group coefficients are
-mostly positive and significant or near-significant (income, education,
-doctor density under weighting), % urban is the exception, not significant
-in either spec despite carrying an opportunity-group SHAP contribution,
-consistent with Limitation 6 (pct_urban is time-invariant, cross-sectional
-signal only). Gini stays non-significant in both specs, consistent with
-the "inconclusive" read already given to it elsewhere in this document.
+model/findings_final.md. % urban carries real SHAP weight but is not
+significant in either OLS spec: it is exactly time-invariant (Limitation
+6), so under department-clustered errors it effectively has 96
+observations, not 960, and the clustered SE correctly reports that its
+between-department variance is not distinguishable from noise across 96
+units, the tree, unconstrained by that clustering correction, is free to
+exploit the same variance directly, so SHAP and OLS are reading the same
+signal two different, both honest, ways, not disagreeing. This also
+sharpens the opportunity-group story: of the four opportunity features,
+only income and education carry weight that survives clustered-SE
+scrutiny, the 58/20 group-level split was never resting on % urban or
+doctor density (see the 79% income+education share noted in the SHAP
+breakdown above) and is not weakened by this. Gini stays non-significant
+in both specs, consistent with the "inconclusive" read already given to
+it elsewhere in this document.
 
 Unemployment was tested four ways, not just on the main model, and fails the
 necessity signature every time (model/findings_informalisation.md):
@@ -192,6 +200,25 @@ fully account for the effect: the overall share-level test is MIXED/INCONCLUSIVE
 because unemployment does not show the same signature (share SHAP rank 6/8, OLS
 not significant, see above). The mechanism behind poverty's positive coefficient
 remains partially unresolved.
+
+**Poverty's positive coefficient is a between-department pattern, not a
+within-department one, and the data cannot really speak to the latter.**
+Poverty's within-department variance is 1.6% of its total variance
+(model/findings_fixed_effects.md), the lowest share of any of the 8
+features besides doctor density and wage share. Under department fixed
+effects, poverty's coefficient is not significant either weighting
+(UW p=0.171, WT p=0.505, WT even flips sign), which is consistent with
+that near-total lack of within-department variation, not a contradiction
+of the pooled result: there is barely any real within-department movement
+in poverty for a within-estimator to find a coefficient in, so an unstable,
+non-significant within-department estimate is the expected outcome, not
+evidence against the pooled, well-powered, cross-sectional finding.
+(A first-differenced spec also exists but should not be cited here: it
+turned out to be substantially driven by the 2012 poverty-sourcing
+discontinuity and other year-specific shocks rather than department-level
+signal, see model/findings_fd_shock_robustness.md.) Read plainly: poverty
+predicts *which departments* see more registrations, not *within a
+department*, that rising poverty over time raises them.
 
 ---
 
@@ -304,24 +331,31 @@ breakdown in model/findings_model_comparison.md).
 rather than left implicit.** ElasticNetCV gets its own native exhaustive
 alpha/l1_ratio path search over its 2 hyperparameters, standard practice
 for that estimator. The three tree models (RandomForest, LightGBM,
-XGBoost) each get a `RandomizedSearchCV` budget of `n_iter=4` draws from a
+XGBoost) each get a `RandomizedSearchCV` budget of `n_iter=20` draws from a
 36-point grid (3 max_depth × 4 learning_rate × 3 n_estimators, or the
-RandomForest equivalent), i.e. roughly 11% of their own grid, sampled per
-outer fold from train-only inner CV. This is not an oversight, running an
-exhaustive 36-point search inside all 96 outer LODO folds for three tree
-models was priced out as a multi-hour job (Section 2 timing note in
-model/findings_model_comparison.md); n_iter=4 was chosen to keep the full
-comparison tractable. The asymmetry means the tree models' reported LODO
-R2 is a lower bound on what more exhaustive tuning might reach, not their
-ceiling. What the asymmetry does not touch: the qualitative result below
-(feature ranking, unemployment's bottom-half position, cross-model
-agreement) held before this caveat was written up and is independent of
-how much further tree tuning could close the R2 gap.
+RandomForest equivalent), i.e. roughly 56% of their own grid, sampled per
+outer fold from train-only inner CV. This budget was raised from an initial
+n_iter=4 (~11% of the grid) specifically to test whether a wider search
+would close the R2 gap seen at the smaller budget; running it across all 96
+outer LODO folds for three tree models took several hours of active compute
+(Reproducibility section, model/findings_model_comparison.md), confirming
+the original tractability concern that kept the budget small in the first
+place. The remaining asymmetry with ElasticNetCV's exhaustive
+2-hyperparameter search is smaller now but not zero: the tree models'
+reported LODO R2 is still a lower bound on what a fully exhaustive search
+might reach, not their ceiling. What the asymmetry does not touch: the
+qualitative result below (feature ranking, unemployment's bottom-half
+position, cross-model agreement) is identical between the n_iter=4 and
+n_iter=20 runs.
 
-Stated plainly: ElasticNetCV generalizes better than tuned XGBoost on these
-folds. LODO R2 = 0.7142 for ElasticNetCV versus 0.6759 for tuned XGBoost.
-XGBoost is not the best-generalizing model on this panel for raw predictive
-accuracy.
+Stated plainly: ElasticNetCV still generalizes marginally better than tuned
+XGBoost on these folds, but the gap narrowed sharply with the larger tuning
+budget. LODO R2 = 0.7142 for ElasticNetCV versus 0.7014 for tuned XGBoost
+(gap -0.0128). That gap now falls within this document's own 0.03 "mostly
+linear" tolerance band, so
+the four-model comparison script classifies this as MOSTLY LINEAR rather
+than the earlier LINEAR OUTPERFORMS. XGBoost is not the best-generalizing
+model on this panel for raw predictive accuracy, but it is close.
 
 XGBoost remains the headline model in this document anyway, for three
 reasons. First, the feature-attribution story throughout this document is
@@ -446,29 +480,27 @@ model. It remains in the feature matrix; the result is inconclusive.
     grew slightly larger rather than shrinking toward zero, unweighted moved
     from -0.2405 (p=0.148) same-year to -0.2961 (p=0.057) lagged, and
     population-weighted moved from -0.5917 (p=0.006) same-year to -0.6501
-    (p=0.001) lagged, remaining significant. Since firm_rate(t) cannot cause
-    unemployment_rate(t-1), it hasn't happened yet, this weakens the
-    pure-simultaneity account of the same-year negative coefficient. It does
-    not resolve the concern: a department with unemployment structurally
-    declining for reasons unrelated to entrepreneurship (an unrelated local
-    industry boom, for instance) could still produce the same lagged
-    pattern, since a one-year lag is not a true instrument. This project
-    still has no instrument and no natural experiment, so a strict causal
-    claim remains out of reach; the lagged result narrows, but does not
-    close, the range of readings consistent with the negative coefficient.
-    **How much weight the lagged test can bear:** unemployment_rate(t) and
+    (p=0.001) lagged, remaining significant.
+
+    **This is a consistency check, not a mitigation, and the reverse-causality
+    threat remains unmitigated.** unemployment_rate(t) and
     unemployment_rate(t-1) correlate at r=0.9777 pooled across the 864-row
     subset (model/findings_lagged_robustness.md). Unemployment is highly
-    persistent year-to-year, so for most department-years the lag is close
-    to a relabeled copy of the same-year value, not a genuinely different
-    regressor. That caps the test's power: a coefficient surviving the lag
-    is expected under high persistence even if the same-year result were
-    partly simultaneity, so this should be read as a mild, not a strong,
-    mitigation of the reverse-causality concern. A true sign flip or
-    collapse toward zero under lagging would still have been meaningful
-    evidence against the negative-coefficient reading; that it did not
-    happen is worth reporting, but the high autocorrelation means its
-    absence proves less than it would for a more volatile variable.
+    persistent year-to-year, so for the large majority of department-years
+    the lag is nearly a relabeled copy of the same-year value, not a
+    genuinely different regressor. At that level of persistence, a
+    coefficient surviving the swap from same-year to lag1 is close to
+    guaranteed whether or not the same-year result is partly a simultaneity
+    artifact, the test has almost no power to distinguish the two
+    explanations. What it does establish, and all it establishes: the
+    coefficient does not flip sign or collapse under lagging, which would
+    itself have been informative had it happened. It did not happen, that
+    is worth recording, but a near-guaranteed outcome under high
+    persistence cannot be read as evidence *for* the negative-coefficient
+    interpretation over the reverse-causality one. This project still has
+    no instrument and no natural experiment. Reverse causality is not
+    narrowed by this test; it is an open threat to interpretation with no
+    mitigation currently in the repo.
 
 ---
 

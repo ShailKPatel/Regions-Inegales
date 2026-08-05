@@ -22,8 +22,8 @@ RandomForest at fixed defaults, an unfair fight. v2 fixed XGBoost/LightGBM
 with a small `RandomizedSearchCV` budget but still left RandomForest untuned
 as a "control", which on review was still an unfair fight for a paper. v3:
 all three tree models now get the same treatment: a small `RandomizedSearchCV`
-(RandomForest n_iter=4 over `n_estimators`/`max_depth`/
-`min_samples_leaf`; LightGBM/XGBoost n_iter=4 over `max_depth`/
+(RandomForest n_iter=20 over `n_estimators`/`max_depth`/
+`min_samples_leaf`; LightGBM/XGBoost n_iter=20 over `max_depth`/
 `learning_rate`/`n_estimators`), each scored on an inner
 `GroupKFold(n_splits=3)` built from the outer-train fold's
 departments (never touching the outer test fold). ElasticNetCV keeps its own
@@ -48,10 +48,10 @@ diff **0.0000** (tolerance 0.001). MATCHED.
 
 | Model | R² | MAE | RMSE | Fit time (s) |
 |---|---|---|---|---|
-| XGBoost | 0.6759 | 1.5172 | 2.2168 | 686.2 |
-| LightGBM | 0.6335 | 1.5074 | 2.3575 | 364.2 |
-| RandomForest | 0.6470 | 1.5274 | 2.3138 | 1148.2 |
-| ElasticNetCV | 0.7142 | 1.5317 | 2.0817 | 103.4 |
+| XGBoost | 0.7014 | 1.4208 | 2.1278 | 16702.8 |
+| LightGBM | 0.6625 | 1.4400 | 2.2623 | 1635.1 |
+| RandomForest | 0.6594 | 1.5174 | 2.2726 | 43168.5 |
+| ElasticNetCV | 0.7142 | 1.5317 | 2.0817 | 103.8 |
 
 ElasticNetCV chosen hyperparameters across 96 folds (inner CV per fold):
 alpha mean=0.0724 (std=0.0069, range 0.0359-0.0973),
@@ -61,24 +61,24 @@ l1_ratio mean=0.100 (std=0.000).
 
 | Model | Untuned R² | Tuned R² | Delta |
 |---|---|---|---|
-| RandomForest | 0.6565 | 0.6470 | -0.0096 |
-| LightGBM | 0.6468 | 0.6335 | -0.0134 |
-| XGBoost | 0.6780 | 0.6759 | -0.0021 |
+| RandomForest | 0.6565 | 0.6594 | +0.0029 |
+| LightGBM | 0.6468 | 0.6625 | +0.0156 |
+| XGBoost | 0.6780 | 0.7014 | +0.0234 |
 
 RandomForest chosen hyperparameters across 96 outer folds (inner search per fold):
-n_estimators mode=150 (range 150-250),
-max_depth mode=20 (values seen: [10, 20]),
-min_samples_leaf mode=2 (range 2-2).
+n_estimators mode=150 (range 150-350),
+max_depth mode=10.0 (values seen: [10, 15, 20, None]),
+min_samples_leaf mode=1 (range 1-2).
 
 LightGBM chosen hyperparameters across 96 outer folds (inner search per fold):
-max_depth mode=4 (range 4-5),
-learning_rate mode=0.05 (range 0.05-0.12),
-n_estimators mode=300 (range 150-450).
+max_depth mode=3 (range 3-5),
+learning_rate mode=0.05 (range 0.03-0.12),
+n_estimators mode=150 (range 150-450).
 
 XGBoost chosen hyperparameters across 96 outer folds (inner search per fold):
-max_depth mode=4 (range 4-5),
-learning_rate mode=0.05 (range 0.05-0.12),
-n_estimators mode=300 (range 150-450).
+max_depth mode=3 (range 3-5),
+learning_rate mode=0.05 (range 0.03-0.12),
+n_estimators mode=150 (range 150-450).
 
 ---
 
@@ -135,9 +135,9 @@ Top-3 features per model:
 
 ## Verdict
 
-### LINEAR OUTPERFORMS (unanticipated by rubric)
+### MOSTLY LINEAR
 
-Even after giving RandomForest, LightGBM, and XGBoost each their own small inner-CV tuning budget (RandomForest: n_estimators/max_depth/min_samples_leaf, n_iter=4; LightGBM/XGBoost: max_depth/learning_rate/n_estimators, n_iter=4; all with inner GroupKFold cv=3, train-fold only) to remove the untuned-vs-tuned asymmetry, none of the three predefined buckets fit cleanly: ElasticNetCV R²=0.7142 still beats tuned XGBoost R²=0.6759 by +0.0383 (best model overall: ElasticNetCV, R²=0.7142), so XGBoost is NOT best-or-tied (fails CONSISTENT's precondition), and the gap is past the 0.03 'within tolerance' band for MOSTLY LINEAR (|gap|=0.0383 > 0.03). Feature rankings still agree strongly (top-3 identical across all four, unemployment bottom-half in all four, min pairwise Spearman rho=+0.810 >= 0.7), so this is not DIVERGENT either. Reported plainly: on identical LODO folds, with RandomForest, LightGBM, and XGBoost now all tuned via small train-fold-only inner-CV searches, the linear model still generalizes to unseen departments BETTER than any of the three tree models (RandomForest [tuned] R²=0.6470, LightGBM [tuned] R²=0.6335, XGBoost [tuned] R²=0.6759, ElasticNetCV R²=0.7142). This is a stronger form of 'findings hold under a simpler model' than the rubric anticipated, not a weaker one, and it survives the fairness fix: which features matter and their direction hold, and the linear model does not need any tree model's nonlinearity to reach (indeed exceed) their LODO generalization, even with tuning.
+ElasticNetCV R²=0.7142 is within 0.03 of tuned XGBoost R²=0.7014 (gap=-0.0128). Tuning XGBoost closed (or nearly closed) the gap that the untuned run showed. Findings hold under a linear model; nonlinearity captured by trees adds little predictive value once XGBoost gets a fair tuning budget.
 
 ---
 
@@ -148,13 +148,13 @@ Even after giving RandomForest, LightGBM, and XGBoost each their own small inner
   ElasticNetCV's inner CV)
 - XGBoost (untuned, reproduction check only): `{'max_depth': 4, 'n_estimators': 300, 'learning_rate': 0.05, 'subsample': 0.8, 'colsample_bytree': 0.8, 'random_state': 42}`
 - XGBoost (tuned, used in comparison): fixed `{'subsample': 0.8, 'colsample_bytree': 0.8, 'random_state': 42, 'n_jobs': -1}`, searched over `{'max_depth': [3, 4, 5], 'learning_rate': [0.03, 0.05, 0.08, 0.12], 'n_estimators': [150, 300, 450]}`
-  via `RandomizedSearchCV(n_iter=4)` on inner `GroupKFold(n_splits=3)`
+  via `RandomizedSearchCV(n_iter=20)` on inner `GroupKFold(n_splits=3)`
   built from outer-train departments
 - LightGBM (untuned, reference only): `{'max_depth': 4, 'n_estimators': 300, 'learning_rate': 0.05, 'subsample': 0.8, 'subsample_freq': 1, 'colsample_bytree': 0.8, 'random_state': 42, 'verbosity': -1}`
 - LightGBM (tuned, used in comparison): fixed `{'subsample': 0.8, 'subsample_freq': 1, 'colsample_bytree': 0.8, 'random_state': 42, 'verbosity': -1, 'n_jobs': -1}`, same search setup as XGBoost above
 - RandomForest (untuned, reference only): `n_estimators=500, random_state=42` (sklearn defaults)
 - RandomForest (tuned, used in comparison): fixed `{'random_state': 42, 'n_jobs': -1}`, searched over `{'n_estimators': [150, 250, 350], 'max_depth': [None, 10, 15, 20], 'min_samples_leaf': [1, 2, 4]}`
-  via `RandomizedSearchCV(n_iter=4)` on inner `GroupKFold(n_splits=3)`
+  via `RandomizedSearchCV(n_iter=20)` on inner `GroupKFold(n_splits=3)`
   built from outer-train departments
 - ElasticNetCV: `StandardScaler` + `ElasticNetCV(l1_ratio=[.1,.5,.7,.9,.95,.99,1.0], cv=5, random_state=42, max_iter=20000)`,
   fit inside an sklearn Pipeline per fold (scaler fit on train only)

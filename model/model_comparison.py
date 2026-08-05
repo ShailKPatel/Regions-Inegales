@@ -81,15 +81,15 @@ XGBOOST_REPRODUCTION_TOLERANCE = 0.001
 XGBOOST_REPRODUCTION_TARGET    = 0.678
 
 # small inner-CV tuning budget for XGBoost + LightGBM (same 3 knobs, same folds logic)
-# grid + n_iter sized from a timed smoke test (one fold, full grid, n_iter=6 took 22.5s for
-# XGBoost alone; at 96 folds that is ~36min for XGBoost alone, over budget). Trimmed to fit
-# the ~30min total (both models) budget while still covering a meaningful depth/lr/n_estimators range.
+# grid unchanged from the original n_iter=4 smoke-tested run; budget raised to
+# n_iter=20 (~56% of the 36-point grid) since a longer wall-clock is acceptable
+# for this rerun.
 TUNE_PARAM_GRID = {
     "max_depth":     [3, 4, 5],
     "learning_rate": [0.03, 0.05, 0.08, 0.12],
     "n_estimators":  [150, 300, 450],
 }
-TUNE_N_ITER      = 4   # randomized search draws per outer fold
+TUNE_N_ITER      = 20  # randomized search draws per outer fold
 INNER_CV_SPLITS  = 3   # inner GroupKFold splits, built from outer-train departments only
 
 # small inner-CV tuning budget for RandomForest (own 3 knobs, same fold logic).
@@ -101,7 +101,7 @@ RF_TUNE_GRID = {
     "max_depth":       [None, 10, 15, 20],
     "min_samples_leaf": [1, 2, 4],
 }
-RF_TUNE_N_ITER = 4
+RF_TUNE_N_ITER = 20
 
 report = []
 def r(line=""):
