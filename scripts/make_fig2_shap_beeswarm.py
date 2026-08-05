@@ -109,7 +109,11 @@ shap.summary_plot(
 )
 fig = plt.gcf()
 ax = fig.axes[0]
-ax.set_xlabel("SHAP value (impact on firm creation rate)", fontsize=8)
+# Two-line xlabel: SHAP's own tight_layout was already computed for a
+# shorter default label, and report_fig saves at the exact figsize
+# (bbox_inches=None), so a long single-line label here overflows the
+# right edge. Wrap it, then re-run layout so it actually fits.
+ax.set_xlabel("SHAP value\n(impact on firm creation rate)", fontsize=8)
 ax.tick_params(axis="both", labelsize=8)
 for tick in ax.get_yticklabels():
     tick.set_fontsize(8)
@@ -120,6 +124,7 @@ if len(fig.axes) > 1:
     cax.set_ylabel(cax.get_ylabel(), fontsize=8)
 
 fig.set_size_inches(IEEE_COL_WIDTH, 3.2)
+fig.tight_layout(pad=0.3)
 
 report_fig(
     fig, OUT,
